@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | Better Nights</title>
+    
+    <link rel="icon" type="image/png" href="app_logo.png">
+    
+    <style>
+        /* --- CORE STYLES --- */
+        :root {
+            --bg: #030303; --fg: #ffffff; --muted: #888888;
+            --accent-purple: #B6A6E9; --accent-red: #FF453A;
+            --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+            --font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            height: 100%; background-color: var(--bg); color: var(--fg);
+            font-family: var(--font-body); overflow-x: hidden;
+            -webkit-font-smoothing: antialiased; scroll-behavior: smooth;
+        }
+
+        /* --- BACKGROUND --- */
+        .dot-matrix-wrapper { position: fixed; top: -20vh; left: -20vw; right: -20vw; bottom: -50vh; z-index: -1; pointer-events: none; }
+        .dot-layer { position: absolute; inset: -100px; width: calc(100% + 200px); height: calc(100% + 200px); }
+        .dot-layer-1 { background-image: radial-gradient(circle, rgba(182, 166, 233, 0.2) 2px, transparent 2px); background-size: 60px 60px; animation: panDots 120s linear infinite; }
+        .ambient-glow { position: fixed; width: 60vw; height: 60vw; border-radius: 50%; background: rgba(182, 166, 233, 0.08); filter: blur(120px); top: -20vh; left: -10vw; z-index: -1; pointer-events: none; }
+        @keyframes panDots { from { background-position: 0px 0px; } to { background-position: 1200px 1200px; } }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 4vw; z-index: 100; background: rgba(3, 3, 3, 0.4);
+            backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .top-bar-logo { display: block; height: 40px; text-decoration: none; }
+        .top-bar-logo img { height: 100%; width: auto; border-radius: 10px; object-fit: contain; }
+
+        /* --- CONTENT WRAPPER --- */
+        .page-container {
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 120px 4vw 40px;
+        }
+
+        .glass-panel {
+            width: 100%; max-width: 900px; border-radius: 40px; 
+            background: rgba(12, 12, 12, 0.4); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 5rem 4rem;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5); margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        /* --- TYPOGRAPHY & ANIMATIONS --- */
+        .fade-in { opacity: 0; transform: translateY(30px); transition: all 1s var(--ease); }
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        h1 { font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 4.5rem); letter-spacing: -0.04em; margin-bottom: 3rem; text-align: center; }
+        h2 { font-family: var(--font-display); font-size: 2rem; margin: 3rem 0 1rem; color: #fff; }
+        p { font-size: 1.15rem; line-height: 1.7; color: var(--muted); margin-bottom: 1.5rem; }
+        
+        .accent-text { background: linear-gradient(180deg, var(--accent-purple) 20%, #ffffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
+        .accent-red { color: var(--accent-red); font-weight: 700; }
+        .highlight { color: #fff; font-weight: 600; }
+
+        /* --- FOOTER --- */
+        footer {
+            width: 100%; max-width: 900px; padding: 2rem 3rem; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 40px;
+            display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2rem;
+        }
+        .footer-col h4 { font-size: 0.8rem; font-weight: 600; color: #aaa; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .footer-col ul { list-style: none; } .footer-col ul li { margin-bottom: 0.6rem; }
+        .footer-col ul a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease; }
+        .footer-col ul a:hover { color: var(--accent-purple); }
+        .copyright { grid-column: 1 / -1; padding-top: 1.5rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); color: #555; font-size: 0.85rem; text-align: center; }
+
+        @media (max-width: 768px) {
+            .glass-panel { padding: 3rem 1.5rem; border-radius: 24px; }
+            h1 { font-size: 2.2rem; } h2 { font-size: 1.6rem; } p { font-size: 1rem; }
+            footer { grid-template-columns: 1fr 1fr; padding: 2rem 1.5rem; border-radius: 24px; }
+            .footer-col:first-child { grid-column: 1 / -1; text-align: center; }
+            .footer-col:first-child p { margin: 0.5rem auto 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dot-matrix-wrapper"><div class="dot-layer dot-layer-1"></div></div>
+    <div class="ambient-glow"></div>
+
+    <header class="top-bar">
+        <a href="index.html" class="top-bar-logo">
+            <img src="app_logo.png" alt="Better Nights Logo">
+        </a>
+    </header>
+
+    <div class="page-container">
+        <div class="glass-panel">
+            <h1 class="fade-in">The Story Behind <br><span class="accent-text">Better Nights</span></h1>
+            
+            <div class="fade-in" style="transition-delay: 0.1s;">
+                <p>Better Nights began with a simple observation: <span class="highlight">college nightlife is fundamentally disconnected.</span></p>
+                <p>Created by UO student <span class="accent-text">William Cleaves</span> as part of the Oregon Innovation Challenge, the platform was born out of frustration. Students were constantly struggling to find the right environment to meet each other and connect on weekends. People were stepping into parties that didn't match their energy, or worse, wandering off-campus with no clear direction.</p>
+            </div>
+
+            <h2 class="fade-in" style="transition-delay: 0.2s;">Connection Meets <span class="accent-red">Safety</span></h2>
+            
+            <div class="fade-in" style="transition-delay: 0.3s;">
+                <p>But the problem went far deeper than just finding a good time. William noticed a recurring, dangerous trend: <span class="highlight">friends having trouble getting home safely at night.</span></p>
+                <p>Whether it was blocked routes, sketchy encounters, or just the anxiety of walking alone in the dark, the current tools weren't enough. Better Nights was built to bridge that gap. By combining real-time campus activity with an uncompromising safety suite, we give students the power to own their night.</p>
+            </div>
+
+            <h2 class="fade-in" style="transition-delay: 0.4s;">100% Private, <span class="highlight">Always.</span></h2>
+            
+            <div class="fade-in" style="transition-delay: 0.5s;">
+                <p>We believe safety shouldn't require trading away your personal data. That's why Better Nights is built with a foundation of <span class="accent-text">absolute privacy</span>.</p>
+                <p>Your location data is never sold, tracked, or stockpiled. When you trigger an SOS, only the trusted friends you explicitly select get your live coordinates. Those you don't want to have it, simply don't get it. You are always in control of your footprint.</p>
+            </div>
+        </div>
+
+        <footer class="fade-in" style="transition-delay: 0.6s;">
+            <div class="footer-col">
+                <h4 style="color: var(--fg); font-family: var(--font-display); font-size: 1rem; letter-spacing: 0;">Better Nights</h4>
+                <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4; margin-top: 0.5rem; text-transform: none; letter-spacing: 0;">Campus nightlife discovery and uncompromising safety.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="legal.html">Terms & Privacy</a></li>
+                </ul>
+            </div>
+            <div class="copyright">&copy; 2026 Better Nights. All rights reserved.</div>
+        </footer>
+    </div>
+
+    <script>
+        // Intersection Observer for fade-in animations
+        const faders = document.querySelectorAll('.fade-in');
+        const appearOptions = { threshold: 0.2, rootMargin: "0px 0px -50px 0px" };
+        
+        const appearOnScroll = new IntersectionObserver(function(entries, observer) {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                entry.target.classList.add('visible');
+                observer.unobserve(entry.target);
+            });
+        }, appearOptions);
+
+        faders.forEach(fader => { appearOnScroll.observe(fader); });
+        
+        // Trigger immediately for elements already in view
+        setTimeout(() => {
+            faders.forEach(fader => {
+                const rect = fader.getBoundingClientRect();
+                if(rect.top < window.innerHeight) fader.classList.add('visible');
+            });
+        }, 100);
+    </script>
+</body>
+</html>
