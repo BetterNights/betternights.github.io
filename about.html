@@ -50,7 +50,7 @@
         .glass-panel {
             width: 100%; max-width: 900px; border-radius: 40px; 
             background: rgba(12, 12, 12, 0.4); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.1); padding: 5rem 4rem;
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 6rem 5rem;
             box-shadow: 0 40px 80px rgba(0,0,0,0.5); margin-bottom: 40px;
             overflow: hidden;
         }
@@ -59,13 +59,14 @@
         .fade-in { opacity: 0; transform: translateY(30px); transition: all 1s var(--ease); }
         .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-        h1 { font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 4.5rem); letter-spacing: -0.04em; margin-bottom: 3rem; text-align: center; }
-        h2 { font-family: var(--font-display); font-size: 2rem; margin: 3rem 0 1rem; color: #fff; }
-        p { font-size: 1.15rem; line-height: 1.7; color: var(--muted); margin-bottom: 1.5rem; }
+        h1 { font-family: var(--font-display); font-size: clamp(3rem, 7vw, 5rem); letter-spacing: -0.04em; margin-bottom: 4rem; text-align: center; line-height: 1; }
+        h2 { font-family: var(--font-display); font-size: 2.2rem; margin: 4rem 0 1.5rem; color: #fff; letter-spacing: -0.02em; }
+        p { font-size: 1.2rem; line-height: 1.6; color: var(--muted); margin-bottom: 1.5rem; letter-spacing: -0.01em; }
         
         .accent-text { background: linear-gradient(180deg, var(--accent-purple) 20%, #ffffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
         .accent-red { color: var(--accent-red); font-weight: 700; }
-        .highlight { color: #fff; font-weight: 600; }
+        .highlight { color: #fff; font-weight: 500; }
+        .sub-headline { font-size: 1.6rem; color: #fff; margin-bottom: 2rem; line-height: 1.4; font-family: var(--font-display); letter-spacing: -0.02em; }
 
         /* --- FOOTER --- */
         footer {
@@ -81,7 +82,8 @@
 
         @media (max-width: 768px) {
             .glass-panel { padding: 3rem 1.5rem; border-radius: 24px; }
-            h1 { font-size: 2.2rem; } h2 { font-size: 1.6rem; } p { font-size: 1rem; }
+            h1 { font-size: 2.5rem; margin-bottom: 2rem; } h2 { font-size: 1.8rem; margin-top: 3rem; } p { font-size: 1.05rem; }
+            .sub-headline { font-size: 1.3rem; }
             footer { grid-template-columns: 1fr 1fr; padding: 2rem 1.5rem; border-radius: 24px; }
             .footer-col:first-child { grid-column: 1 / -1; text-align: center; }
             .footer-col:first-child p { margin: 0.5rem auto 0; }
@@ -100,29 +102,38 @@
 
     <div class="page-container">
         <div class="glass-panel">
-            <h1 class="fade-in">The Story Behind <br><span class="accent-text">Better Nights</span></h1>
+            <h1 class="fade-in">Made for the night.<br><span class="accent-text">Built for you.</span></h1>
             
             <div class="fade-in" style="transition-delay: 0.1s;">
-                <p>Better Nights began with a simple observation: <span class="highlight">college nightlife is fundamentally disconnected.</span></p>
-                <p>Created by UO student <span class="accent-text">William Cleaves</span> as part of the Oregon Innovation Challenge, the platform was born out of frustration. Students were constantly struggling to find the right environment to meet each other and connect on weekends. People were stepping into parties that didn't match their energy, or worse, wandering off-campus with no clear direction.</p>
+                <p class="sub-headline">College nightlife is fundamentally broken. We decided it was time to fix it.</p>
+                <p>Better Nights began as a project for the Oregon Innovation Challenge. Our founder, UO student William Cleaves, noticed a glaring disconnect on campus. Weekends were supposed to be about letting go, but instead, they were often defined by friction. Students were wandering the streets looking for the right crowd, stepping into spaces that didn't match their energy, or worse—struggling to find a safe way home.</p>
+                <p>We realized that existing social apps were great at keeping people on their screens, but terrible at bringing them together in the real world. So, we started building.</p>
             </div>
 
-            <h2 class="fade-in" style="transition-delay: 0.2s;">Connection Meets <span class="accent-red">Safety</span></h2>
+            <h2 class="fade-in" style="transition-delay: 0.2s;">Find your people. instantly.</h2>
             
             <div class="fade-in" style="transition-delay: 0.3s;">
-                <p>But the problem went far deeper than just finding a good time. William noticed a recurring, dangerous trend: <span class="highlight">friends having trouble getting home safely at night.</span></p>
-                <p>Whether it was blocked routes, sketchy encounters, or just the anxiety of walking alone in the dark, the current tools weren't enough. Better Nights was built to bridge that gap. By combining real-time campus activity with an uncompromising safety suite, we give students the power to own their night.</p>
+                <p>Finding the right room shouldn't be a guessing game. Your Friday night deserves better than aimless walking.</p>
+                <p>We designed Better Nights to seamlessly connect you with the environments you actually want to be in. Whether you're looking for a massive dance floor, a low-key kickback, or just a place to meet new people, the platform cuts out the noise. It’s about putting you exactly where you want to be, with the people who match your vibe.</p>
             </div>
 
-            <h2 class="fade-in" style="transition-delay: 0.4s;">100% Private, <span class="highlight">Always.</span></h2>
+            <h2 class="fade-in" style="transition-delay: 0.4s;">Your safety. <span class="accent-red">In your hands.</span></h2>
             
             <div class="fade-in" style="transition-delay: 0.5s;">
-                <p>We believe safety shouldn't require trading away your personal data. That's why Better Nights is built with a foundation of <span class="accent-text">absolute privacy</span>.</p>
-                <p>Your location data is never sold, tracked, or stockpiled. When you trigger an SOS, only the trusted friends you explicitly select get your live coordinates. Those you don't want to have it, simply don't get it. You are always in control of your footprint.</p>
+                <p>The walk home matters just as much as the destination. As we talked to more students, the same story kept coming up: friends feeling anxious, unsafe, or lost while navigating off-campus areas in the dark.</p>
+                <p>We knew that simply finding a party wasn't enough. We had to build a platform that actually protected you. That’s why we integrated a live map driven by real-time campus reporting. Blocked routes, sketchy encounters, active incidents—you see it all before you step foot out the door. And if things go wrong, an uncompromising SOS system alerts your closest friends instantly.</p>
+            </div>
+
+            <h2 class="fade-in" style="transition-delay: 0.6s;">Privacy. <span class="highlight">It’s a right.</span></h2>
+            
+            <div class="fade-in" style="transition-delay: 0.7s;">
+                <p>We believe your personal safety shouldn't cost you your personal data. Period.</p>
+                <p>Better Nights is built on a foundation of absolute, uncompromising privacy. We don't sell your location. We don't stockpile your footprints. When you trigger an alert, your exact coordinates are sent exclusively to the circle of friends you explicitly trust. <span class="highlight">Those you don't want to have it, simply don't get it.</span></p>
+                <p>We built Better Nights so you can focus on the music, the people, and the moment. Leave the rest to us.</p>
             </div>
         </div>
 
-        <footer class="fade-in" style="transition-delay: 0.6s;">
+        <footer class="fade-in" style="transition-delay: 0.8s;">
             <div class="footer-col">
                 <h4 style="color: var(--fg); font-family: var(--font-display); font-size: 1rem; letter-spacing: 0;">Better Nights</h4>
                 <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4; margin-top: 0.5rem; text-transform: none; letter-spacing: 0;">Campus nightlife discovery and uncompromising safety.</p>
@@ -144,9 +155,8 @@
     </div>
 
     <script>
-        // Intersection Observer for fade-in animations
         const faders = document.querySelectorAll('.fade-in');
-        const appearOptions = { threshold: 0.2, rootMargin: "0px 0px -50px 0px" };
+        const appearOptions = { threshold: 0.15, rootMargin: "0px 0px -20px 0px" };
         
         const appearOnScroll = new IntersectionObserver(function(entries, observer) {
             entries.forEach(entry => {
@@ -158,7 +168,6 @@
 
         faders.forEach(fader => { appearOnScroll.observe(fader); });
         
-        // Trigger immediately for elements already in view
         setTimeout(() => {
             faders.forEach(fader => {
                 const rect = fader.getBoundingClientRect();
