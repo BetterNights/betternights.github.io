@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Legal | Better Nights</title>
+    
+    <link rel="icon" type="image/png" href="app_logo.png">
+    
+    <style>
+        /* --- CORE STYLES --- */
+        :root {
+            --bg: #030303; --fg: #ffffff; --muted: #888888;
+            --accent-purple: #B6A6E9;
+            --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+            --font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            height: 100%; background-color: var(--bg); color: var(--fg);
+            font-family: var(--font-body); overflow-x: hidden;
+            -webkit-font-smoothing: antialiased; scroll-behavior: smooth;
+        }
+
+        /* --- BACKGROUND --- */
+        .dot-matrix-wrapper { position: fixed; top: -20vh; left: -20vw; right: -20vw; bottom: -50vh; z-index: -1; pointer-events: none; }
+        .dot-layer { position: absolute; inset: -100px; width: calc(100% + 200px); height: calc(100% + 200px); }
+        .dot-layer-1 { background-image: radial-gradient(circle, rgba(255, 255, 255, 0.1) 2px, transparent 2px); background-size: 60px 60px; animation: panDots 120s linear infinite; }
+        @keyframes panDots { from { background-position: 0px 0px; } to { background-position: 1200px 1200px; } }
+
+        /* --- TOP BAR --- */
+        .top-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 4vw; z-index: 100; background: rgba(3, 3, 3, 0.4);
+            backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .top-bar-logo { display: block; height: 40px; text-decoration: none; }
+        .top-bar-logo img { height: 100%; width: auto; border-radius: 10px; object-fit: contain; }
+
+        /* --- CONTENT WRAPPER --- */
+        .page-container {
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 120px 4vw 40px;
+        }
+
+        .glass-panel {
+            width: 100%; max-width: 900px; border-radius: 40px; 
+            background: rgba(12, 12, 12, 0.4); backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1); padding: 5rem 4rem;
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5); margin-bottom: 40px;
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 { font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3.5rem); margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 1.5rem; }
+        h3 { font-family: var(--font-display); font-size: 1.3rem; margin: 2rem 0 0.8rem; color: #fff; }
+        p { font-size: 1rem; line-height: 1.6; color: var(--muted); margin-bottom: 1rem; }
+        .last-updated { font-size: 0.85rem; color: #555; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2rem; }
+
+        /* --- FOOTER --- */
+        footer {
+            width: 100%; max-width: 900px; padding: 2rem 3rem; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 40px;
+            display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2rem;
+        }
+        .footer-col h4 { font-size: 0.8rem; font-weight: 600; color: #aaa; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .footer-col ul { list-style: none; } .footer-col ul li { margin-bottom: 0.6rem; }
+        .footer-col ul a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease; }
+        .footer-col ul a:hover { color: var(--accent-purple); }
+        .copyright { grid-column: 1 / -1; padding-top: 1.5rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); color: #555; font-size: 0.85rem; text-align: center; }
+
+        @media (max-width: 768px) {
+            .glass-panel { padding: 3rem 1.5rem; border-radius: 24px; }
+            footer { grid-template-columns: 1fr 1fr; padding: 2rem 1.5rem; border-radius: 24px; }
+            .footer-col:first-child { grid-column: 1 / -1; text-align: center; }
+            .footer-col:first-child p { margin: 0.5rem auto 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dot-matrix-wrapper"><div class="dot-layer dot-layer-1"></div></div>
+
+    <header class="top-bar">
+        <a href="index.html" class="top-bar-logo">
+            <img src="app_logo.png" alt="Better Nights Logo">
+        </a>
+    </header>
+
+    <div class="page-container">
+        <div class="glass-panel">
+            <h1>Terms & Legal Disclaimers</h1>
+            <div class="last-updated">Last Updated: March 2026</div>
+            
+            <p>Welcome to Better Nights. By accessing or using our platform, you agree to be bound by the following disclaimers and terms. Please read them carefully.</p>
+
+            <h3>1. Limitation of Liability</h3>
+            <p>Better Nights acts solely as a discovery and communication tool. We are not responsible for your safety, well-being, or any injuries, damages, or loss of life that may occur while navigating to, from, or attending any location or event found on the app. Your personal safety is entirely your own responsibility.</p>
+
+            <h3>2. User-Generated Hazards & Map Data</h3>
+            <p>The map and hazard features on Better Nights rely heavily on user-generated reports. We do not guarantee the accuracy, timeliness, or completeness of any hazard marker or event listing. A location appearing safe on the map does not guarantee it is inherently safe, and reported hazards may be incorrect or resolved. Always exercise personal judgment and situational awareness.</p>
+
+            <h3>3. Data Security & Hacks</h3>
+            <p>While Better Nights utilizes industry-standard security measures and prioritizes your absolute privacy, no digital platform is completely immune to cyber threats. We are not liable for any unauthorized access, data breaches, hacks, or exploitation of data beyond our immediate control.</p>
+
+            <h3>4. Service Availability</h3>
+            <p>We do not guarantee that the SOS features or mapping services will be available at all times. Network failures, carrier issues, or server downtime may prevent the transmission of your location. You should always have secondary methods of contacting emergency services.</p>
+        </div>
+
+        <footer>
+            <div class="footer-col">
+                <h4 style="color: var(--fg); font-family: var(--font-display); font-size: 1rem; letter-spacing: 0;">Better Nights</h4>
+                <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4; margin-top: 0.5rem; text-transform: none; letter-spacing: 0;">Campus nightlife discovery and uncompromising safety.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="about.html">About Us</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Legal</h4>
+                <ul>
+                    <li><a href="legal.html">Terms & Privacy</a></li>
+                </ul>
+            </div>
+            <div class="copyright">&copy; 2026 Better Nights. All rights reserved.</div>
+        </footer>
+    </div>
+</body>
+</html>
