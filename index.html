@@ -139,7 +139,6 @@
         .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; width: 100%; align-items: center; z-index: 2; }
         .text-content { opacity: 0; transform: translateY(40px); transition: all 1s var(--ease); max-width: 480px; }
         
-        /* Desktop alignment centering tricks */
         .split-layout:not([style*="direction: rtl"]) .text-content { margin-left: auto; }
         .split-layout[style*="direction: rtl"] .text-content { margin-right: auto; }
 
@@ -191,12 +190,11 @@
             .section { height: 100vh; min-height: unset; padding: 80px 4vw 2vh 4vw; scroll-snap-align: center; }
             .glass-island { border-radius: 24px; padding: 4vh 5vw; height: 100%; max-height: 85vh; display: flex; flex-direction: column; justify-content: center; }
             
-            /* HERO TEXT SANDWICH LAYOUT WITH PERFECTED PIXEL OVERLAP */
             .hero-layout { position: relative; display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
             .hero-text-block { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; z-index: 5; pointer-events: none; }
             .hero-text-block h1 { 
                 display: flex; flex-direction: column; justify-content: space-between; align-items: center; 
-                height: 60vh; /* Dialed in to ensure just a few pixels of overlap on the top/bottom of the phone */
+                height: 60vh; 
                 width: 100%; line-height: 0.85; 
                 font-size: clamp(3.2rem, 18vw, 5.5rem); 
                 margin: 0; 
@@ -207,7 +205,6 @@
             .dynamic-word.active { transform: translate(-50%, 0); }
             .static-word { margin-top: 0; font-size: inherit; color: rgba(255, 255, 255, 0.95); }
 
-            /* MOCKUPS */
             .phone-wrapper { flex-shrink: 0; }
             #hero-phone.phone-wrapper { width: clamp(140px, 40vw, 210px); margin: 0 auto; z-index: 10; }
             .phone-dynamic-island { height: clamp(10px, 2.5%, 20px); top: 2%; }
@@ -223,9 +220,10 @@
             .outro-content { padding: 3vh 3vw; }
             .outro-content h2 { font-size: clamp(2.2rem, 9vw, 3.5rem); }
             
+            /* WAITLIST FORM FIX: Width explicitly set to 100% on both elements */
             .waitlist-form { margin-top: 2vh; flex-direction: column; border-radius: 20px; background: transparent; border: none; padding: 0; width: 100%; }
-            .waitlist-form input { border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 0.8rem 1rem; font-size: 0.9rem; }
-            .waitlist-form button { padding: 0.8rem; border-radius: 12px; font-size: 0.95rem; }
+            .waitlist-form input { border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 0.8rem 1rem; font-size: 0.9rem; width: 100%; }
+            .waitlist-form button { padding: 0.8rem; border-radius: 12px; font-size: 0.95rem; width: 100%; }
 
             footer { grid-template-columns: 1fr 1fr; gap: 1.5vh; padding: 3vh 5vw; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
             .footer-col h4 { margin-bottom: 0.5rem; font-size: 0.75rem; }
