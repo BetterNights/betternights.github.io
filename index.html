@@ -1,36 +1,546 @@
-.waitlist-form { 
-    margin-top: 2rem; 
-    display: flex; 
-    background: rgba(255, 255, 255, 0.05); 
-    border: 1px solid rgba(255, 255, 255, 0.15); 
-    padding: 6px; /* Uniform inner padding */
-    border-radius: 100px; 
-    width: 100%; 
-    max-width: 450px; 
-    transition: border-color 0.3s var(--ease); 
-}
-.waitlist-form:focus-within { border-color: var(--accent-purple); }
-.waitlist-form input { 
-    flex: 1; 
-    background: transparent; 
-    border: none; 
-    color: #fff; 
-    padding: 12px 20px; /* Defines the overall height */
-    font-size: 1rem; 
-    outline: none; 
-    font-family: var(--font-body); 
-}
-.waitlist-form input::placeholder { color: rgba(255, 255, 255, 0.4); }
-.waitlist-form button { 
-    background: #fff; 
-    color: #000; 
-    border: none; 
-    padding: 0 24px; 
-    border-radius: 100px; 
-    font-weight: 600; 
-    font-size: 0.95rem; 
-    cursor: pointer; 
-    transition: all 0.3s var(--ease);
-    align-self: stretch; /* Forces button to match input height perfectly */
-}
-.waitlist-form button:hover { background: var(--accent-purple); transform: scale(1.02); }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Better Nights | Own The Night</title>
+    
+    <link rel="icon" type="image/png" href="app_logo.png">
+    
+    <style>
+        /* --- ULTRA PREMIUM VARIABLES --- */
+        :root {
+            --bg: #030303;
+            --fg: #ffffff;
+            --muted: #888888;
+            --accent-purple: #B6A6E9;
+            --accent-red: #FF453A;
+            --accent-hazard: #FF9F0A; 
+            --font-display: "SF Pro Display", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+            --font-body: "SF Pro Text", -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+            --ease: cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body, html {
+            height: 100%;
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-body);
+            overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* --- GLOBAL BACKGROUNDS & PARALLAX DOTS --- */
+        .dot-matrix-wrapper {
+            position: fixed; top: -20vh; left: -20vw; right: -20vw; bottom: -50vh; 
+            z-index: 1; pointer-events: none;
+            transform: translateY(var(--scroll-offset, 0px));
+            will-change: transform;
+        }
+
+        .dot-layer {
+            position: absolute; inset: -100px; 
+            width: calc(100% + 200px); height: calc(100% + 200px);
+        }
+
+        .dot-layer-1 {
+            background-image: radial-gradient(circle, rgba(182, 166, 233, 0.3) 2px, transparent 2px);
+            background-size: 60px 60px;
+            animation: panDots 120s linear infinite, waveMotion 15s ease-in-out infinite;
+        }
+
+        .dot-layer-2 {
+            background-image: radial-gradient(circle, rgba(182, 166, 233, 0.7) 4px, transparent 4px);
+            background-size: 240px 240px;
+            animation: panDots 180s linear infinite, waveMotion 18s ease-in-out infinite reverse;
+        }
+
+        @keyframes panDots { from { background-position: 0px 0px; } to { background-position: 1200px 1200px; } }
+        @keyframes waveMotion { 0%, 100% { transform: translate(0px, 0px); } 50% { transform: translate(15px, 25px); } }
+
+        .ambient-glow {
+            position: fixed; border-radius: 50%; filter: blur(120px);
+            z-index: 1; opacity: 0.3; transition: all 1s var(--ease); pointer-events: none;
+        }
+        
+        .glow-purple { width: 50vw; height: 50vw; background: rgba(182, 166, 233, 0.12); top: -20vh; left: -10vw; }
+        .glow-red { width: 40vw; height: 40vw; background: rgba(255, 69, 58, 0.08); bottom: -10vh; right: -10vw; opacity: 0; }
+
+        /* --- TOP BAR (MENU & LOGO) --- */
+        .top-bar {
+            position: fixed; top: 0; left: 0; right: 0; height: 80px;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 4vw; z-index: 100; background: rgba(3, 3, 3, 0.4);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .top-bar-logo { display: block; height: 40px; text-decoration: none; }
+        .top-bar-logo img { height: 100%; width: auto; border-radius: 10px; object-fit: contain; }
+
+        /* --- SCROLL ARCHITECTURE --- */
+        .scroll-container {
+            height: 100vh; overflow-y: scroll; scroll-snap-type: y mandatory;
+            scroll-behavior: smooth; scrollbar-width: none;
+            -ms-overflow-style: none; position: relative; z-index: 5; 
+        }
+        .scroll-container::-webkit-scrollbar { display: none; }
+
+        .section {
+            height: 100vh; width: 100vw; scroll-snap-align: center;
+            scroll-snap-stop: always; position: relative; display: flex;
+            align-items: center; justify-content: center;
+            padding: calc(80px + 2vh) 4vw 4vh 4vw; 
+        }
+
+        #hero-section { padding-top: 80px; }
+
+        /* --- FLOATING TRANSLUCENT ISLANDS --- */
+        .glass-island {
+            width: 100%; height: 100%; max-width: 1300px;
+            border-radius: 40px; background: rgba(12, 12, 12, 0.4); 
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 40px 80px rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            padding: 2vw 4vw; position: relative; overflow: hidden;
+            transition: border-color 1s var(--ease);
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h2 { font-family: var(--font-display); font-size: clamp(2.2rem, 5vw, 4.5rem); font-weight: 700; letter-spacing: -0.04em; line-height: 1.05; margin-bottom: 1rem; }
+        p { font-size: clamp(0.95rem, 1.3vw, 1.15rem); color: var(--muted); line-height: 1.5; letter-spacing: -0.01em; }
+
+        /* --- HERO TEXT --- */
+        .hero { perspective: 2000px; overflow: hidden; }
+        .hero-layout { display: flex; align-items: center; justify-content: center; width: 100%; max-width: 1100px; z-index: 10; gap: 10vw; }
+        .hero-text-block { z-index: 20; text-align: left; }
+        .hero-text-block h1 { font-family: var(--font-display); font-size: clamp(3.5rem, 8vw, 8rem); font-weight: 800; letter-spacing: -0.05em; line-height: 1; margin-bottom: 0; color: var(--fg); }
+
+        .word-cycler { display: inline-block; position: relative; }
+        .invisible-placeholder { visibility: hidden; pointer-events: none; display: inline-block; padding-right: 0.3em; }
+        .dynamic-word { display: inline-block; position: absolute; left: 0; top: 0; background: linear-gradient(180deg, var(--accent-purple) 20%, #ffffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; opacity: 0; white-space: nowrap; padding-right: 0.3em; transform: translateY(20px); transition: transform 0.8s var(--ease), opacity 0.8s var(--ease); }
+        .dynamic-word.active { opacity: 1; transform: translateY(0); }
+        .static-word { display: block; color: var(--fg); }
+
+        /* --- 3D MOCKUPS --- */
+        .phone-wrapper { position: relative; z-index: 10; width: clamp(200px, 19vw, 300px); aspect-ratio: 1179 / 2556; perspective: 1500px; }
+        .phone-pivot { width: 100%; height: 100%; transform-style: preserve-3d; transition: transform 0.1s linear; will-change: transform; }
+        .phone-body { position: absolute; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: clamp(30px, 4vw, 44px); border: clamp(4px, 1vw, 8px) solid rgba(255, 255, 255, 0.08); transform-style: preserve-3d; transform: translateZ(20px); }
+        .phone-edge { content: ''; position: absolute; inset: -2px; border-radius: inherit; background: #151516; transform: translateZ(-14px); box-shadow: 0 40px 80px rgba(0,0,0,0.8); }
+        .phone-glare { position: absolute; inset: 0; background: linear-gradient(105deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0) 40%, rgba(255,255,255,0) 100%); z-index: 30; border-radius: inherit; pointer-events: none; transform: translateZ(1px); }
+        .phone-dynamic-island { position: absolute; top: 10px; left: 50%; transform: translateX(-50%) translateZ(2px); width: 32%; height: clamp(20px, 2vw, 32px); background: #000; border-radius: 20px; z-index: 40; }
+        .phone-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; border-radius: inherit; background: #000; z-index: 10; }
+
+        /* --- SPLIT LAYOUT --- */
+        .split-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 4vw; width: 100%; align-items: center; z-index: 2; }
+        .text-content { opacity: 0; transform: translateY(40px); transition: all 1s var(--ease); max-width: 480px; }
+        
+        .split-layout:not([style*="direction: rtl"]) .text-content { margin-left: auto; }
+        .split-layout[style*="direction: rtl"] .text-content { margin-right: auto; }
+
+        .visual-content { display: flex; justify-content: center; opacity: 0; transform: scale(0.95) rotateY(10deg); transition: all 1s var(--ease) 0.1s; }
+        .section.is-active .text-content { opacity: 1; transform: translateY(0); }
+        .section.is-active .visual-content { opacity: 1; transform: scale(1) rotateY(0deg); }
+
+        .tag { display: inline-flex; align-items: center; padding: 0.4rem 0.8rem; border-radius: 100px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); backdrop-filter: blur(10px); color: var(--fg); }
+        .tag.purple { color: var(--accent-purple); border-color: rgba(182, 166, 233, 0.3); }
+        .tag.red { color: var(--accent-red); border-color: rgba(255, 69, 58, 0.3); background: rgba(255, 69, 58, 0.05); }
+        .tag.orange { color: var(--accent-hazard); border-color: rgba(255, 159, 10, 0.3); background: rgba(255, 159, 10, 0.05); }
+
+        #live-map h2 { color: var(--fg); } #live-map h2 .accent { color: var(--accent-purple); }
+        #sos-section.is-active .glass-island { border-color: rgba(255, 69, 58, 0.3); }
+
+        /* --- OUTRO & FOOTER ISLAND --- */
+        #outro-section .glass-island { flex-direction: column; justify-content: space-between; padding: 0; }
+        .outro-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; width: 100%; padding: 5vw; }
+        
+        /* WAITLIST FORM FIX: Desktop Layout */
+        .waitlist-form { 
+            margin-top: 2rem; 
+            display: flex; 
+            background: rgba(255, 255, 255, 0.05); 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            padding: 6px; 
+            border-radius: 100px; 
+            width: 100%; 
+            max-width: 450px; 
+            transition: border-color 0.3s var(--ease); 
+        }
+        .waitlist-form:focus-within { border-color: var(--accent-purple); }
+        .waitlist-form input { 
+            flex: 1; 
+            background: transparent; 
+            border: none; 
+            color: #fff; 
+            padding: 12px 20px; 
+            font-size: 1rem; 
+            outline: none; 
+            font-family: var(--font-body); 
+        }
+        .waitlist-form input::placeholder { color: rgba(255, 255, 255, 0.4); }
+        .waitlist-form button { 
+            background: #fff; 
+            color: #000; 
+            border: none; 
+            padding: 0 24px; 
+            border-radius: 100px; 
+            font-weight: 600; 
+            font-size: 0.95rem; 
+            cursor: pointer; 
+            transition: all 0.3s var(--ease);
+            align-self: stretch;
+        }
+        .waitlist-form button:hover { background: var(--accent-purple); transform: scale(1.02); }
+
+        footer { width: 100%; padding: 2rem 5vw; background: rgba(0,0,0,0.3); border-top: 1px solid rgba(255,255,255,0.08); display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 2rem; border-bottom-left-radius: 40px; border-bottom-right-radius: 40px; }
+        .footer-col h4 { font-size: 0.8rem; font-weight: 600; color: #aaa; margin-bottom: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; }
+        .footer-col ul { list-style: none; } .footer-col ul li { margin-bottom: 0.6rem; }
+        .footer-col ul a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s ease; }
+        .footer-col ul a:hover { color: var(--accent-purple); }
+        .copyright { grid-column: 1 / -1; padding-top: 1.5rem; margin-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05); color: #555; font-size: 0.85rem; text-align: center; }
+
+        /* --- RESPONSIVE ADJUSTMENTS (DESKTOP) --- */
+        @media (max-width: 1024px) {
+            .hero-layout { flex-direction: column; text-align: center; gap: 5vh; }
+            .hero-text-block { text-align: center; }
+            .dynamic-word { left: 50%; transform: translate(-50%, 20px); }
+            .dynamic-word.active { transform: translate(-50%, 0); }
+            .split-layout { grid-template-columns: 1fr; text-align: center; gap: 4vh; }
+            .split-layout:not([style*="direction: rtl"]) .text-content { margin-left: auto; margin-right: auto; }
+            .split-layout[style*="direction: rtl"] .text-content { margin-right: auto; margin-left: auto; }
+            .visual-content { order: -1; } .tag { margin-inline: auto; } p { margin-inline: auto; }
+            footer { grid-template-columns: 1fr 1fr; } .glass-island { padding: 5vw; height: auto; }
+        }
+        
+        /* --- STRICT MOBILE OPTIMIZATIONS --- */
+        @media (max-width: 768px) {
+            .scroll-container { scroll-snap-type: y mandatory; }
+            .section { height: 100vh; min-height: unset; padding: 80px 4vw 2vh 4vw; scroll-snap-align: center; }
+            .glass-island { border-radius: 24px; padding: 4vh 5vw; height: 100%; max-height: 85vh; display: flex; flex-direction: column; justify-content: center; }
+            
+            .hero-layout { position: relative; display: flex; justify-content: center; align-items: center; height: 100%; width: 100%; }
+            .hero-text-block { position: absolute; inset: 0; display: flex; justify-content: center; align-items: center; z-index: 5; pointer-events: none; }
+            .hero-text-block h1 { 
+                display: flex; flex-direction: column; justify-content: space-between; align-items: center; 
+                height: 60vh; 
+                width: 100%; line-height: 0.85; 
+                font-size: clamp(3.2rem, 18vw, 5.5rem); 
+                margin: 0; 
+            }
+            .word-cycler { display: flex; justify-content: center; width: 100%; }
+            .invisible-placeholder { padding-right: 0; }
+            .dynamic-word { left: 50%; transform: translate(-50%, 20px); padding-right: 0; text-align: center; }
+            .dynamic-word.active { transform: translate(-50%, 0); }
+            .static-word { margin-top: 0; font-size: inherit; color: rgba(255, 255, 255, 0.95); }
+
+            .phone-wrapper { flex-shrink: 0; }
+            #hero-phone.phone-wrapper { width: clamp(140px, 40vw, 210px); margin: 0 auto; z-index: 10; }
+            .phone-dynamic-island { height: clamp(10px, 2.5%, 20px); top: 2%; }
+            .phone-body { border-radius: clamp(24px, 8%, 38px); border-width: clamp(2px, 1vw, 5px); }
+
+            .split-layout { grid-template-columns: 1fr; gap: 3vh; text-align: center; }
+            .visual-content { order: -1; } .visual-content .phone-wrapper { width: clamp(120px, 32vw, 160px); }
+
+            h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); margin-bottom: 1vh; line-height: 1.1; }
+            p { font-size: 0.85rem; line-height: 1.4; margin-bottom: 0; margin-inline: auto; max-width: 95%; }
+            .tag { margin-bottom: 1.5vh; padding: 0.3rem 0.6rem; font-size: 0.7rem; }
+
+            .outro-content { padding: 3vh 3vw; }
+            .outro-content h2 { font-size: clamp(2.2rem, 9vw, 3.5rem); }
+            
+            /* WAITLIST FORM FIX: Mobile Layout Override */
+            .waitlist-form { margin-top: 2vh; flex-direction: column; border-radius: 20px; background: transparent; border: none; padding: 0; width: 100%; }
+            .waitlist-form input { border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; margin-bottom: 8px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); padding: 0.8rem 1rem; font-size: 0.9rem; width: 100%; }
+            .waitlist-form button { padding: 0.8rem; border-radius: 12px; font-size: 0.95rem; width: 100%; }
+
+            footer { grid-template-columns: 1fr 1fr; gap: 1.5vh; padding: 3vh 5vw; border-bottom-left-radius: 24px; border-bottom-right-radius: 24px; }
+            .footer-col h4 { margin-bottom: 0.5rem; font-size: 0.75rem; }
+            .footer-col ul li { margin-bottom: 0.3rem; }
+            .footer-col ul a { font-size: 0.8rem; }
+            .footer-col:first-child { grid-column: 1 / -1; text-align: center; margin-bottom: 1vh;} 
+            .footer-col:first-child p { margin-inline: auto; font-size: 0.8rem; }
+            .copyright { padding-top: 1vh; margin-top: 0.5vh; font-size: 0.75rem; }
+            .glow-purple, .glow-red { width: 80vw; height: 80vw; }
+        }
+
+        @media (max-height: 700px) and (max-width: 768px) {
+            .section { padding-top: 70px; } .glass-island { padding: 2.5vh 4vw; }
+            .hero-text-block h1 { height: 68vh; font-size: clamp(2.8rem, 16vw, 4.5rem); }
+            #hero-phone.phone-wrapper { width: clamp(130px, 38vw, 170px); }
+            .visual-content .phone-wrapper { width: clamp(110px, 30vw, 140px); }
+            h2 { font-size: clamp(1.4rem, 6vw, 1.8rem); } p { font-size: 0.8rem; line-height: 1.3; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dot-matrix-wrapper">
+        <div class="dot-layer dot-layer-1"></div>
+        <div class="dot-layer dot-layer-2"></div>
+    </div>
+    <div class="ambient-glow glow-purple" id="main-glow"></div>
+    <div class="ambient-glow glow-red" id="sos-glow"></div>
+
+    <header class="top-bar">
+        <a href="index.html" class="top-bar-logo">
+            <img src="app_logo.png" alt="Better Nights Logo">
+        </a>
+    </header>
+
+    <div class="scroll-container" id="scroll-wrapper">
+
+        <section class="section hero" id="hero-section">
+            <div class="hero-layout">
+                <div class="hero-text-block">
+                    <h1>
+                        <span class="word-cycler">
+                            <span class="invisible-placeholder">BRIGHTER</span>
+                            <span class="dynamic-word" id="current-word">BETTER</span>
+                        </span>
+                        <span class="static-word">NIGHTS</span>
+                    </h1>
+                </div>
+                <div class="phone-wrapper" id="hero-phone">
+                    <div class="phone-pivot" id="hero-pivot">
+                        <div class="phone-body">
+                            <div class="phone-edge"></div>
+                            <img src="map_screen.png" alt="Better Nights Map" class="phone-screen">
+                            <div class="phone-glare"></div>
+                            <div class="phone-dynamic-island"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="live-map">
+            <div class="glass-island">
+                <div class="split-layout">
+                    <div class="text-content">
+                        <div class="tag">Active Map</div>
+                        <h2>Navigate with<br><span class="accent">confidence.</span></h2>
+                        <p>Visualize campus activity in real-time. Monitor gathering sizes, explore new connections, and make informed decisions about your evening.</p>
+                    </div>
+                    <div class="visual-content">
+                        <div class="phone-wrapper" style="pointer-events: none;">
+                            <div class="phone-pivot">
+                                <div class="phone-body">
+                                    <div class="phone-edge"></div>
+                                    <img src="feed_screen.png" alt="Map View" class="phone-screen">
+                                    <div class="phone-glare"></div>
+                                    <div class="phone-dynamic-island"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="social-section">
+            <div class="glass-island">
+                <div class="split-layout" style="direction: rtl;">
+                    <div class="text-content" style="direction: ltr;">
+                        <div class="tag purple">Parties</div>
+                        <h2>Find your<br>community.</h2>
+                        <p>Discover your ideal environment. Select your preferred atmosphere and group size to seamlessly connect with gatherings that match your preferences.</p>
+                    </div>
+                    <div class="visual-content">
+                        <div class="phone-wrapper" style="pointer-events: none;">
+                            <div class="phone-pivot">
+                                <div class="phone-body">
+                                    <div class="phone-edge"></div>
+                                    <img src="vibe_screen.png" alt="Vibe Selection" class="phone-screen">
+                                    <div class="phone-glare"></div>
+                                    <div class="phone-dynamic-island"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="host-section">
+            <div class="glass-island">
+                <div class="split-layout">
+                    <div class="text-content">
+                        <div class="tag purple">Hosting</div>
+                        <h2>Pack the<br>house.</h2>
+                        <p>Whether you're a bar owner looking to fill the dance floor or hosting a house party, effortlessly create events to attract the exact crowd you want and put your spot on the map.</p>
+                    </div>
+                    <div class="visual-content">
+                        <div class="phone-wrapper" style="pointer-events: none;">
+                            <div class="phone-pivot">
+                                <div class="phone-body">
+                                    <div class="phone-edge"></div>
+                                    <img src="create_screen.png" alt="Create a Party" class="phone-screen">
+                                    <div class="phone-glare"></div>
+                                    <div class="phone-dynamic-island"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="sos-section">
+            <div class="glass-island">
+                <div class="split-layout" style="direction: rtl;">
+                    <div class="text-content" style="direction: ltr;">
+                        <div class="tag red">SOS</div>
+                        <h2 style="background: linear-gradient(180deg, #fff 0%, var(--accent-red) 100%); -webkit-background-clip: text;">Immediate assistance.<br>Absolute privacy.</h2>
+                        <p>When you're in danger, your trusted friends get your live location in just one button press. It's totally secure, and those you don't want to have it, don't get it.</p>
+                    </div>
+                    <div class="visual-content">
+                        <div class="phone-wrapper" style="pointer-events: none;">
+                            <div class="phone-pivot">
+                                <div class="phone-body" style="border-color: rgba(255, 69, 58, 0.2);">
+                                    <div class="phone-edge"></div>
+                                    <img src="pin_screen.png" alt="Secure PIN" class="phone-screen">
+                                    <div class="phone-glare"></div>
+                                    <div class="phone-dynamic-island"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="hazard">
+            <div class="glass-island">
+                <div class="split-layout">
+                    <div class="text-content">
+                        <div class="tag orange">Live Updates</div>
+                        <h2 style="background: linear-gradient(180deg, #fff 0%, var(--accent-hazard) 100%); -webkit-background-clip: text;">Identify.<br>Report.</h2>
+                        <p>See exactly what's happening around campus. You can easily view and report many different types of danger—from blocked routes to active incidents—keeping yourself and others out of harm's way.</p>
+                    </div>
+                    <div class="visual-content">
+                        <div class="phone-wrapper" style="pointer-events: none;">
+                            <div class="phone-pivot">
+                                <div class="phone-body" style="border-color: rgba(255, 159, 10, 0.2);">
+                                    <div class="phone-edge"></div>
+                                    <img src="hazard_screen.png" alt="Hazard Reporting" class="phone-screen">
+                                    <div class="phone-glare"></div>
+                                    <div class="phone-dynamic-island"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section outro" id="outro-section">
+            <div class="glass-island">
+                <div class="outro-content text-content">
+                    <h2 style="font-size: clamp(3rem, 7vw, 6rem); margin-bottom: 0;">Launching Soon.</h2>
+                    
+                    <form class="waitlist-form" onsubmit="event.preventDefault(); alert('Thank you for joining the waitlist.'); this.reset();">
+                        <input type="email" placeholder="student@uoregon.edu" required>
+                        <button type="submit">Join</button>
+                    </form>
+                </div>
+
+                <footer>
+                    <div class="footer-col">
+                        <h4 style="color: var(--fg); font-family: var(--font-display); font-size: 1rem; letter-spacing: 0;">Better Nights</h4>
+                        <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4; margin-top: 0.5rem; text-transform: none; letter-spacing: 0;">Campus nightlife discovery and uncompromising safety.</p>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="about.html">About Us</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Legal</h4>
+                        <ul>
+                            <li><a href="legal.html">Terms & Privacy</a></li>
+                        </ul>
+                    </div>
+                    <div class="copyright">&copy; 2026 Better Nights. All rights reserved.</div>
+                </footer>
+            </div>
+        </section>
+
+    </div>
+
+    <script>
+        const scrollWrapper = document.getElementById('scroll-wrapper');
+        const dotWrapper = document.querySelector('.dot-matrix-wrapper');
+
+        scrollWrapper.addEventListener('scroll', () => {
+            const scrolled = scrollWrapper.scrollTop;
+            dotWrapper.style.setProperty('--scroll-offset', `-${scrolled * 0.1}px`);
+        });
+
+        const phonePivot = document.getElementById('hero-pivot');
+        const heroPhone = document.getElementById('hero-phone');
+        const heroSection = document.getElementById('hero-section');
+        let targetX = 0, targetY = 0, currentX = 0, currentY = 0;
+
+        heroSection.addEventListener('mousemove', (e) => {
+            const rect = heroPhone.getBoundingClientRect();
+            const phoneCenterX = rect.left + rect.width / 2;
+            const phoneCenterY = rect.top + rect.height / 2;
+            targetX = ((e.clientX - phoneCenterX) / window.innerWidth) * 2;
+            targetY = ((e.clientY - phoneCenterY) / window.innerHeight) * 2;
+        });
+
+        heroSection.addEventListener('mouseleave', () => { targetX = 0; targetY = 0; });
+
+        function animateParallax() {
+            currentX += (targetX - currentX) * 0.08;
+            currentY += (targetY - currentY) * 0.08;
+            phonePivot.style.transform = `rotateY(${currentX * 25}deg) rotateX(${-currentY * 25}deg)`;
+            requestAnimationFrame(animateParallax);
+        }
+        
+        if (window.innerWidth > 1024) { animateParallax(); }
+
+        const words = ["BETTER", "SAFER", "SMARTER", "CLEARER", "BRIGHTER"];
+        let wordIndex = 0;
+        const currentWordEl = document.getElementById('current-word');
+
+        currentWordEl.innerText = words[wordIndex];
+        currentWordEl.classList.add('active');
+
+        setInterval(() => {
+            wordIndex = (wordIndex + 1) % words.length;
+            currentWordEl.classList.remove('active');
+            setTimeout(() => {
+                currentWordEl.innerText = words[wordIndex];
+                currentWordEl.classList.add('active');
+            }, 800); 
+        }, 3500); 
+
+        const sections = document.querySelectorAll('.section');
+        const purpleGlow = document.getElementById('main-glow');
+        const redGlow = document.getElementById('sos-glow');
+        
+        const sectionObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-active');
+                    if(entry.target.id === 'sos-section') {
+                        redGlow.style.opacity = '0.5'; purpleGlow.style.opacity = '0';
+                    } else if (entry.target.id === 'outro-section') {
+                        redGlow.style.opacity = '0'; purpleGlow.style.opacity = '0';
+                    } else {
+                        redGlow.style.opacity = '0'; purpleGlow.style.opacity = '0.3';
+                    }
+                }
+            });
+        }, { root: document.getElementById('scroll-wrapper'), threshold: 0.4 });
+
+        sections.forEach(section => sectionObserver.observe(section));
+    </script>
+</body>
+</html>
