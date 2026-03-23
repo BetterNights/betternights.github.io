@@ -59,14 +59,16 @@
         .fade-in { opacity: 0; transform: translateY(30px); transition: all 1s var(--ease); }
         .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-        h1 { font-family: var(--font-display); font-size: clamp(3rem, 7vw, 5rem); letter-spacing: -0.04em; margin-bottom: 4rem; text-align: center; line-height: 1; }
-        h2 { font-family: var(--font-display); font-size: 2.2rem; margin: 4rem 0 1.5rem; color: #fff; letter-spacing: -0.02em; }
+        h1, h2, .sub-headline { font-weight: 700; font-family: var(--font-display); }
+        
+        h1 { font-size: clamp(3rem, 7vw, 5rem); letter-spacing: -0.04em; margin-bottom: 4rem; text-align: center; line-height: 1; }
+        h2 { font-size: 2.2rem; margin: 4rem 0 1.5rem; color: #fff; letter-spacing: -0.02em; }
         p { font-size: 1.2rem; line-height: 1.6; color: var(--muted); margin-bottom: 1.5rem; letter-spacing: -0.01em; }
         
-        .accent-text { background: linear-gradient(180deg, var(--accent-purple) 20%, #ffffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; }
-        .accent-red { color: var(--accent-red); font-weight: 700; }
-        .highlight { color: #fff; font-weight: 500; }
-        .sub-headline { font-size: 1.6rem; color: #fff; margin-bottom: 2rem; line-height: 1.4; font-family: var(--font-display); letter-spacing: -0.02em; }
+        .accent-text { background: linear-gradient(180deg, var(--accent-purple) 20%, #ffffff 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .accent-red { color: var(--accent-red); }
+        .highlight { color: #fff; }
+        .sub-headline { font-size: 1.6rem; color: #fff; margin-bottom: 2rem; line-height: 1.4; letter-spacing: -0.02em; }
 
         /* --- FOOTER --- */
         footer {
@@ -105,34 +107,34 @@
             <h1 class="fade-in">Clarity for<br><span class="accent-text">the night.</span></h1>
             
             <div class="fade-in" style="transition-delay: 0.1s;">
-                <p class="sub-headline">The weekend, engineered.</p>
-                <p>Spontaneous connection shouldn't require relentless coordination. Better Nights is designed to eliminate the friction of organizing a night out. It is a seamless platform built to help you discover real-time energy in your city, gather your people, and elevate your evening—effortlessly.</p>
+                <p class="sub-headline">Built for the weekend.</p>
+                <p>Planning a night out shouldn't feel like a logistical nightmare. Better Nights gets you out of the group chat and into the city. It is a dedicated platform designed to help you find where the energy is, meet up with friends, and actually enjoy your evening.</p>
             </div>
         
             <h2 class="fade-in" style="transition-delay: 0.2s;">Know before <span class="highlight">you go.</span></h2>
             
             <div class="fade-in" style="transition-delay: 0.3s;">
-                <p>Whether you seek a high-energy environment or an intimate space, our dynamic map delivers immediate, actionable intelligence. We’ve removed the guesswork from your night, providing your group with the exact insights needed to move with confidence.</p>
+                <p>Whether you want a crowded venue or a quiet place to grab a drink, our active map shows you exactly what is happening in real time. No more guessing where to head next. Your group gets the right information to make a decision and keep moving.</p>
             </div>
         
-            <h2 class="fade-in" style="transition-delay: 0.4s;">Safety, <span class="accent-red">on demand.</span></h2>
+            <h2 class="fade-in" style="transition-delay: 0.4s;">Safety on <span class="accent-red">demand.</span></h2>
             
             <div class="fade-in" style="transition-delay: 0.5s;">
-                <p>The reality of the city at night is dynamic, and groups inevitably separate. Traditional location-sharing relies on constant, invasive broadcasting. Better Nights introduces a fundamentally different approach: situational awareness, exclusively on your terms.</p>
-                <p>Our proprietary SOS architecture empowers you to instantly transmit precise coordinates to a pre-selected, trusted circle—only when necessary. Reconnection is immediate, accurate, and secure.</p>
+                <p>Things change fast on a night out, and people get separated. Standard location apps force you to constantly broadcast your whereabouts. Better Nights takes a completely different approach.</p>
+                <p>Our SOS feature lets you drop your exact coordinates to a trusted circle of friends, but only when you actually need to. If someone wanders off, finding them is fast and accurate.</p>
             </div>
         
             <h2 class="fade-in" style="transition-delay: 0.6s;">Privacy <span class="highlight">by design.</span></h2>
             
             <div class="fade-in" style="transition-delay: 0.7s;">
-                <p>Your location is your data. Better Nights is architected from the ground up to keep you connected without compromising your digital footprint. When your night concludes, your sharing terminates. Period.</p>
+                <p>Your location data belongs to you. We built this app to keep you connected and safe without tracking your every move. When you decide the night is over, the app stops sharing.</p>
             </div>
         </div>
 
         <footer class="fade-in" style="transition-delay: 0.8s;">
             <div class="footer-col">
                 <h4 style="color: var(--fg); font-family: var(--font-display); font-size: 1rem; letter-spacing: 0;">Better Nights</h4>
-                <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4; margin-top: 0.5rem; text-transform: none; letter-spacing: 0;">Nightlife discovery and uncompromising safety.</p>
+                <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4; margin-top: 0.5rem; text-transform: none; letter-spacing: 0;">Nightlife discovery and absolute safety.</p>
             </div>
             <div class="footer-col">
                 <h4>Company</h4>
