@@ -480,68 +480,9 @@
             max-width: 38ch;
         }
 
-        .request-form {
-            border: 1px solid #3a3a3a;
-            border-radius: var(--radius-md);
-            background: linear-gradient(180deg, #181818, #141414);
-            padding: 0.7rem;
-            box-shadow: 0 14px 30px rgba(0, 0, 0, 0.34);
-        }
-
-        .request-input-wrap {
-            display: grid;
-            grid-template-columns: 1fr auto;
-            gap: 0.5rem;
-        }
-
-        .request-form input {
-            width: 100%;
-            min-width: 0;
-            border-radius: 12px;
-            border: 1px solid #333;
-            background: #111;
-            color: var(--text);
-            padding: 0.75rem 0.85rem;
-            font-size: 0.92rem;
-            outline: none;
-        }
-
-        .request-form input:focus {
-            border-color: #5b5b5b;
-            box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.06);
-        }
-
-        .request-btn {
-            width: 100%;
-            border: none;
-            background: #f0f0f0;
-            color: #111;
-            font-size: 0.95rem;
-            font-weight: 650;
-            letter-spacing: 0.01em;
-            padding: 0.75rem 1rem;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: background-color 180ms var(--ease), transform 180ms var(--ease), opacity 180ms var(--ease);
-        }
-
-        .request-btn:hover { background: #dcdcdc; }
-        .request-btn:active { transform: scale(0.99); }
-        .request-btn:disabled { opacity: 0.65; cursor: wait; }
-
-        .request-feedback {
-            margin-top: 0.58rem;
-            min-height: 1.2rem;
-            font-size: 0.82rem;
-            color: var(--muted);
-        }
-
-        .request-feedback.error {
-            color: #ff9797;
-        }
-
-        .request-feedback.success {
-            color: #a3f0b8;
+        .cta-band-solo {
+            grid-template-columns: 1fr;
+            text-align: center;
         }
 
         .scroll-progress {
@@ -678,7 +619,6 @@
             h1 { font-size: clamp(2rem, 13vw, 3rem); max-width: 10.8ch; }
             .hero p { font-size: 0.99rem; max-width: 100%; }
             .button-row .btn { width: 100%; }
-            .request-input-wrap { grid-template-columns: 1fr; }
             .feature-grid,
             .trust-grid,
             .footer-grid { grid-template-columns: 1fr; }
@@ -729,7 +669,6 @@
                 <a href="#capabilities">Platform</a>
                 <a href="#experience">Experience</a>
                 <a href="#enterprise">Enterprise</a>
-                <a href="#launch" class="cta-nav">Request Access</a>
             </nav>
         </div>
     </header>
@@ -747,8 +686,7 @@
                         Bttr Nghts helps you see what is live, where your people are, and how to move through the night with more confidence.
                     </p>
                     <div class="button-row">
-                        <a href="#launch" class="btn primary">Get Early Access</a>
-                        <a href="#capabilities" class="btn">Explore Features</a>
+                        <a href="#capabilities" class="btn primary">Explore Features</a>
                     </div>
                 </div>
                 <aside class="phone-frame" aria-label="Product preview">
@@ -933,19 +871,10 @@
 
         <section id="launch">
             <div class="container">
-                <div class="cta-band">
+                <div class="cta-band cta-band-solo">
                     <div>
-                        <span class="eyebrow">Request Access</span>
-                        <h2>Join the launch list for May 2026.</h2>
-                        <p>Use your university email and we will notify you as soon as access opens.</p>
+                        <h2>Awaiting our app store debut.</h2>
                     </div>
-                    <form class="request-form" id="request-form" novalidate>
-                        <div class="request-input-wrap">
-                            <input id="request-email" type="email" placeholder="student@university.edu" autocomplete="email" required>
-                            <button class="request-btn" id="request-submit" type="submit">Request Access</button>
-                        </div>
-                        <p class="request-feedback" id="request-feedback" role="status" aria-live="polite">Launching May 2026</p>
-                    </form>
                 </div>
             </div>
         </section>
@@ -1032,57 +961,6 @@
                 event.preventDefault();
                 const targetTop = target.offsetTop;
                 scroller.scrollTo({ top: targetTop, behavior: "smooth" });
-            });
-        })();
-
-        (function setupRequestAccess() {
-            const form = document.getElementById("request-form");
-            const emailInput = document.getElementById("request-email");
-            const submitBtn = document.getElementById("request-submit");
-            const feedback = document.getElementById("request-feedback");
-            if (!form || !emailInput || !submitBtn || !feedback) return;
-
-            function setFeedback(message, kind) {
-                feedback.textContent = message;
-                feedback.className = "request-feedback" + (kind ? " " + kind : "");
-            }
-
-            function isEdu(email) {
-                return /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.edu$/i.test(email);
-            }
-
-            form.addEventListener("submit", async function (event) {
-                event.preventDefault();
-                const email = emailInput.value.trim();
-                if (!email) {
-                    setFeedback("Enter your .edu email to request access.", "error");
-                    return;
-                }
-                if (!isEdu(email)) {
-                    setFeedback("Only .edu email addresses are allowed.", "error");
-                    return;
-                }
-
-                submitBtn.disabled = true;
-                setFeedback("Submitting request...", "");
-                try {
-                    const response = await fetch("https://api.betternights.app/request-access", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ email: email })
-                    });
-                    const data = await response.json().catch(function () { return {}; });
-                    if (!response.ok) {
-                        setFeedback(data.error || "Request failed. Please try again.", "error");
-                    } else {
-                        setFeedback("You are in. Launching May 2026.", "success");
-                        form.reset();
-                    }
-                } catch (error) {
-                    setFeedback("Network error. Please try again soon.", "error");
-                } finally {
-                    submitBtn.disabled = false;
-                }
             });
         })();
 
