@@ -178,6 +178,30 @@
             border-color: #555;
         }
 
+        a.get-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            min-width: 68px;
+            padding: 0.4rem 1.15rem;
+            border-radius: 999px;
+            background: #007AFF;
+            color: #ffffff;
+            font-size: 0.82rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border: none;
+            transition: transform 180ms var(--ease);
+        }
+
+        a.get-btn:hover {
+            background: #007AFF;
+            color: #ffffff;
+            transform: scale(1.10);
+        }
+
         main {
             height: calc(100vh - 74px);
             overflow-y: auto;
@@ -613,7 +637,7 @@
         }
 
         @media (max-width: 760px) {
-            .top-nav a:not(.cta-nav) { display: none; }
+            .top-nav a:not(.cta-nav):not(.get-btn) { display: none; }
             .container { width: min(var(--container), calc(100% - 1.25rem)); }
             section { padding: 2.9rem 0; }
             h1 { font-size: clamp(2rem, 13vw, 3rem); max-width: 10.8ch; }
@@ -669,6 +693,7 @@
                 <a href="#capabilities">Platform</a>
                 <a href="#experience">Experience</a>
                 <a href="#enterprise">Enterprise</a>
+                <a href="https://apps.apple.com/us/app/bttr-nghts/id6761159922" class="get-btn" target="_blank" rel="noopener noreferrer" aria-label="Get Bttr Nghts on the App Store">Get</a>
             </nav>
         </div>
     </header>
@@ -714,20 +739,20 @@
         <section class="trust-strip" aria-label="Value highlights">
             <div class="container trust-grid">
                 <article class="trust-item">
-                    <h3><span class="trust-symbol" aria-hidden="true">🗺️</span>Live map clarity</h3>
-                    <p>Skip noise and spot the right places quickly.</p>
+                    <h3>The whole night, one map</h3>
+                    <p>See every spot that's actually busy right now.</p>
                 </article>
                 <article class="trust-item">
-                    <h3><span class="trust-symbol" aria-hidden="true">👥</span>Friend-first social</h3>
-                    <p>Check where your crew is before plans lock in.</p>
+                    <h3>Safety that has your back</h3>
+                    <p>One tap on SOS shares your live location with the people you trust.</p>
                 </article>
                 <article class="trust-item">
-                    <h3><span class="trust-symbol" aria-hidden="true">⚡</span>Faster decisions</h3>
-                    <p>Know what is happening now, not an hour ago.</p>
+                    <h3>Your people, on the map</h3>
+                    <p>Know where your friends are before you pick the spot.</p>
                 </article>
                 <article class="trust-item">
-                    <h3><span class="trust-symbol" aria-hidden="true">🛡️</span>Private safety tools</h3>
-                    <p>SOS lets you choose trusted contacts and send them your live location instantly.</p>
+                    <h3>Never miss the move</h3>
+                    <p>What's happening tonight, in real time, not an hour late.</p>
                 </article>
             </div>
         </section>
@@ -873,7 +898,10 @@
             <div class="container">
                 <div class="cta-band cta-band-solo">
                     <div>
-                        <h2>Awaiting our app store debut.</h2>
+                        <h2>Find us on the App Store.</h2>
+                        <div class="button-row" style="justify-content: center;">
+                            <a href="https://apps.apple.com/us/app/bttr-nghts/id6761159922" class="get-btn" target="_blank" rel="noopener noreferrer" aria-label="Get Bttr Nghts on the App Store">Get</a>
+                        </div>
                     </div>
                 </div>
             </div>
