@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#141414" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.betternights.app http://127.0.0.1:* http://localhost:*; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'" />
+  <title>Bttr Nghts Business</title>
+  <meta name="description" content="Sign in to manage your venue on Bttr Nghts." />
+  <link rel="stylesheet" href="css/portal.css" />
+</head>
+<body>
+  <main class="auth-wrap">
+    <div id="file-banner" class="banner-file hidden" role="alert"></div>
+    <div class="brand-lockup">
+      <img class="brand-logo" src="assets/app_logo.png" alt="Bttr Nghts" width="72" height="72" />
+      <p class="tag">Business portal — manage your venue, events, and verification.</p>
+    </div>
+
+    <section class="panel" aria-label="Sign in">
+      <div class="tabs-auth" role="tablist">
+        <button type="button" id="tab-login" class="active" role="tab" aria-selected="true">Sign in</button>
+        <button type="button" id="tab-signup" role="tab" aria-selected="false">Create account</button>
+      </div>
+
+      <form id="form-login" autocomplete="on">
+        <div class="field">
+          <label for="login-phone">Phone</label>
+          <input id="login-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit US phone" required />
+        </div>
+        <div class="field">
+          <label for="login-password">Password</label>
+          <input id="login-password" name="password" type="password" autocomplete="current-password" required minlength="8" />
+        </div>
+        <button class="btn btn-primary" type="submit" id="login-submit">Sign in</button>
+      </form>
+
+      <form id="form-signup" class="hidden" autocomplete="on">
+        <div class="field">
+          <label for="signup-phone">Phone</label>
+          <input id="signup-phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="10-digit US phone" required />
+        </div>
+        <div class="field">
+          <label for="signup-password">Password</label>
+          <input id="signup-password" name="password" type="password" autocomplete="new-password" required minlength="8" />
+        </div>
+        <div class="field">
+          <label for="signup-otp">SMS code</label>
+          <input id="signup-otp" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" placeholder="6-digit code" maxlength="8" />
+          <p class="hint">We text a code to verify your number before creating the account.</p>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" type="button" id="btn-send-otp">Send code</button>
+          <button class="btn btn-primary" type="submit" id="signup-submit">Create business account</button>
+        </div>
+      </form>
+
+      <p id="auth-msg" class="msg" role="status"></p>
+    </section>
+  </main>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/abuse.js"></script>
+  <script src="js/auth-page.js"></script>
+</body>
+</html>

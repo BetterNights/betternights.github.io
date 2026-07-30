@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#141414" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https://protomaps.github.io; connect-src 'self' https://api.betternights.app http://127.0.0.1:* http://localhost:* https://bttr-nghts-map-tiles.s3.us-east-2.amazonaws.com https://protomaps.github.io https://checkout.stripe.com; worker-src blob:; child-src blob:; base-uri 'none'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'; object-src 'none'" />
+  <title>Business dashboard — Bttr Nghts</title>
+  <link rel="stylesheet" href="css/portal.css" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+</head>
+<body>
+  <div class="shell">
+    <nav class="nav-bottom" aria-label="Business tabs">
+      <div class="nav-brand" aria-hidden="true">
+        <img class="brand-logo brand-logo-nav" src="assets/app_logo.png" alt="" width="36" height="36" />
+      </div>
+      <button type="button" data-tab="overview" class="active">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M4 19h3V9H4v10zm6 0h3V4h-3v15zm6 0h3v-7h-3v7z"/></svg></span>
+        Overview
+      </button>
+      <button type="button" data-tab="event">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 3l8 4.5v2.2c0 4.6-3.1 8.9-8 10.3C7.1 18.6 4 14.3 4 9.7V7.5L12 3zm0 2.2L6 8.4v1.3c0 3.7 2.4 7.1 6 8.3 3.6-1.2 6-4.6 6-8.3V8.4l-6-3.2z"/></svg></span>
+        Event
+      </button>
+      <button type="button" data-tab="map">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M15 5.1l-6 2.1L3 5v14.2l6 2.1 6-2.1 6 2.1V7.2L15 5.1zM9 18.3l-4-1.4V7.4l4 1.4v9.5zm6-1.5l-4 1.4V8.8l4-1.4v9.4zm4 1.5l-2-.7V7.8l2-.7v10.5z"/></svg></span>
+        Map
+      </button>
+      <button type="button" data-tab="info">
+        <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" width="21" height="21" fill="currentColor"><path d="M12 12a4.2 4.2 0 100-8.4A4.2 4.2 0 0012 12zm0 1.8c-3.4 0-7.2 1.7-7.2 4.2V20h14.4v-2c0-2.5-3.8-4.2-7.2-4.2z"/></svg></span>
+        Info
+      </button>
+    </nav>
+
+    <header class="app-top">
+      <div>
+        <h1 id="venue-title">Business Dashboard</h1>
+        <p class="hint" id="venue-sub" style="margin:0.2rem 0 0"></p>
+      </div>
+      <span class="chip-status unverified" id="verify-chip">UNVERIFIED</span>
+    </header>
+
+    <main class="app-main">
+      <!-- Overview -->
+      <section class="tab-panel active panel" id="tab-overview">
+        <h2 class="section-title">Tonight on Bttr Nghts</h2>
+        <div class="stat-grid" id="overview-stats">
+          <div class="stat-row"><span class="label">Active events</span><span class="value" id="stat-parties">—</span></div>
+          <div class="stat-row"><span class="label">Hazard reports</span><span class="value" id="stat-hazards">—</span></div>
+          <div class="stat-row"><span class="label">Active users (now)</span><span class="value" id="stat-users">—</span></div>
+        </div>
+        <p id="overview-msg" class="msg" role="status"></p>
+        <button class="btn btn-ghost" type="button" id="btn-refresh-overview" style="margin-top:1rem">Refresh</button>
+      </section>
+
+      <!-- Event -->
+      <section class="tab-panel panel" id="tab-event">
+        <div id="event-live" class="hidden">
+          <div class="live-card">
+            <span class="live-badge">LIVE</span>
+            <h2 class="section-title" id="live-headline" style="margin-top:0"></h2>
+            <p class="hint" id="live-meta"></p>
+            <p id="live-body" style="margin:0.75rem 0; line-height:1.45"></p>
+            <div class="btn-row">
+              <button class="btn btn-ghost" type="button" id="btn-edit-live">Edit event</button>
+              <button class="btn btn-ghost" type="button" id="btn-live-stats">Open stats</button>
+              <button class="btn btn-danger" type="button" id="btn-end-live">End event</button>
+            </div>
+          </div>
+          <p id="stats-box" class="hint" style="margin-top:0.75rem"></p>
+        </div>
+
+        <div id="event-editor">
+          <h2 class="section-title" id="editor-title">New event</h2>
+          <div class="field">
+            <label for="ev-headline">Headline</label>
+            <input id="ev-headline" maxlength="80" />
+          </div>
+          <div class="field">
+            <label for="ev-body">Details</label>
+            <textarea id="ev-body" maxlength="500"></textarea>
+          </div>
+          <div class="field">
+            <label for="ev-address">Street address</label>
+            <input id="ev-address" />
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="ev-vibe">Vibe</label>
+              <input id="ev-vibe" maxlength="40" />
+            </div>
+            <div class="field">
+              <label for="ev-looking">Looking for</label>
+              <input id="ev-looking" maxlength="40" />
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="ev-free">Entry</label>
+              <select id="ev-free">
+                <option value="1">Free</option>
+                <option value="0">Cover charge</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ev-cover">Cover ($)</label>
+              <input id="ev-cover" type="number" min="0" step="1" value="0" />
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="ev-age">Minimum age</label>
+              <select id="ev-age">
+                <option value="">None</option>
+                <option>18</option>
+                <option>21</option>
+                <option>25</option>
+                <option>50</option>
+                <option>65</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ev-full">Capacity</label>
+              <select id="ev-full">
+                <option value="0">Open</option>
+                <option value="1">Full</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label for="ev-start">Starts</label>
+              <input id="ev-start" type="datetime-local" />
+            </div>
+            <div class="field">
+              <label for="ev-end">Ends</label>
+              <input id="ev-end" type="datetime-local" />
+            </div>
+          </div>
+          <h3 class="section-title" style="margin-top:1rem">Event location on map</h3>
+          <p class="hint">
+            Green = your business · Lavender = this event · Blue = you.
+            Tap the map to place the party pin (required before starting).
+          </p>
+          <div class="btn-row map-actions" style="margin-bottom:0.55rem">
+            <button class="btn btn-primary" type="button" id="btn-locate-event">Show my location</button>
+          </div>
+          <div class="map-frame map-frame-pick">
+            <div id="map-event" role="application" aria-label="Event location map"></div>
+            <div class="map-tone" aria-hidden="true"></div>
+          </div>
+          <p class="hint map-legend" style="margin-top:0.55rem">
+            <span class="map-legend-swatch map-legend-business"></span> Business
+            <span class="map-legend-swatch map-legend-party"></span> This event
+            <span class="map-legend-swatch map-legend-user"></span> You
+          </p>
+          <p class="hint" id="event-pin-hint">No event pin yet — tap the map (defaults to your venue until you move it).</p>
+          <div class="btn-row">
+            <button class="btn btn-primary" type="button" id="btn-start-event">Start event — pay with card</button>
+            <button class="btn btn-ghost hidden" type="button" id="btn-save-edit">Save changes (free)</button>
+            <button class="btn btn-ghost" type="button" id="btn-save-draft">Save draft</button>
+          </div>
+          <p id="event-msg" class="msg" role="status"></p>
+        </div>
+
+        <div style="margin-top:1.25rem">
+          <h3 class="section-title">Past events</h3>
+          <div id="past-list" class="list-actions"></div>
+        </div>
+      </section>
+
+      <!-- Map -->
+      <section class="tab-panel panel panel-map" id="tab-map">
+        <h2 class="section-title">Map</h2>
+        <div class="map-frame">
+          <div id="map" role="application" aria-label="Venue and party map"></div>
+          <div class="map-tone" aria-hidden="true"></div>
+        </div>
+        <div class="btn-row map-actions" style="margin-top:0.75rem">
+          <button class="btn btn-primary" type="button" id="btn-locate-me">Show my location</button>
+          <button class="btn btn-ghost" type="button" id="btn-refresh-map">Refresh parties</button>
+        </div>
+        <p class="hint map-legend" style="margin-top:0.65rem">
+          <span class="map-legend-swatch map-legend-business"></span> Your business
+          <span class="map-legend-swatch map-legend-party"></span> Parties / your event
+          <span class="map-legend-swatch map-legend-user"></span> You
+        </p>
+        <p id="map-msg" class="msg" role="status"></p>
+      </section>
+
+      <!-- Info -->
+      <section class="tab-panel panel" id="tab-info">
+        <div id="info-lock">
+          <h2 class="section-title" style="text-align:center">Enter PIN</h2>
+          <div class="pin-dots" id="info-pin-dots"><span></span><span></span><span></span><span></span></div>
+          <div class="pin-pad" id="info-pin-pad"></div>
+          <p id="info-pin-msg" class="msg" role="status"></p>
+        </div>
+        <div id="info-body" class="hidden">
+          <div class="list-actions">
+            <button type="button" id="btn-get-verified">Get verified</button>
+            <button type="button" id="btn-edit-profile">Edit profile</button>
+            <button type="button" id="btn-lock-info">Lock</button>
+            <button type="button" id="btn-logout">Sign out</button>
+            <a class="btn btn-ghost" href="https://betternights.app/privacy.html" target="_blank" rel="noopener">Privacy</a>
+            <a class="btn btn-ghost" href="https://betternights.app/community-guidelines.html" target="_blank" rel="noopener">Community guidelines</a>
+          </div>
+          <div id="profile-edit" class="hidden" style="margin-top:1rem">
+            <h3 class="section-title">Edit profile</h3>
+            <div class="field"><label for="edit-name">Business name</label><input id="edit-name" /></div>
+            <div class="field"><label for="edit-address">Address</label><input id="edit-address" /></div>
+            <div class="field"><label for="edit-phone">Phone</label><input id="edit-phone" /></div>
+            <div class="field"><label for="edit-about">About</label><textarea id="edit-about" maxlength="250"></textarea></div>
+            <button class="btn btn-primary" type="button" id="btn-save-profile">Save profile</button>
+            <p id="profile-msg" class="msg" role="status"></p>
+          </div>
+          <div id="verify-panel" class="hidden" style="margin-top:1rem">
+            <h3 class="section-title">Verification</h3>
+            <p class="hint">Follow @bttrnghts on Instagram, then request a review.</p>
+            <label class="check-row"><input type="checkbox" id="info-did-follow" /><span>I followed @bttrnghts</span></label>
+            <button class="btn btn-primary" type="button" id="btn-request-verify-info">Request verification</button>
+            <p id="verify-info-msg" class="msg" role="status"></p>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/abuse.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

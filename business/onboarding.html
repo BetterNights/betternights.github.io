@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#141414" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https://protomaps.github.io; connect-src 'self' https://api.betternights.app http://127.0.0.1:* http://localhost:* https://bttr-nghts-map-tiles.s3.us-east-2.amazonaws.com https://protomaps.github.io; worker-src blob:; child-src blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'" />
+  <title>Set up your venue — Bttr Nghts</title>
+  <link rel="stylesheet" href="css/portal.css" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
+</head>
+<body>
+  <main class="shell shell-onboard">
+    <div class="brand-lockup brand-lockup-wide">
+      <img class="brand-logo" src="assets/app_logo.png" alt="Bttr Nghts" width="72" height="72" />
+      <p class="tag">Tell guests who you are. One setup — then you can run tonight’s event.</p>
+    </div>
+
+    <section class="panel" id="step-setup" style="grid-column:1/-1; max-width:720px; margin:0 auto; width:100%">
+      <h2 class="section-title">Business setup</h2>
+      <div class="field">
+        <label for="biz-name">Business name</label>
+        <input id="biz-name" maxlength="120" required />
+      </div>
+      <div class="field">
+        <label for="biz-address">Street address (required with map pin)</label>
+        <input id="biz-address" maxlength="200" required placeholder="123 Main St, City, ST" autocomplete="street-address" />
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="biz-phone">Contact phone</label>
+          <input id="biz-phone" type="tel" inputmode="numeric" required />
+        </div>
+        <div class="field">
+          <label for="biz-email">Contact email</label>
+          <input id="biz-email" type="email" />
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="biz-website">Website</label>
+          <input id="biz-website" type="url" placeholder="https://" />
+        </div>
+        <div class="field">
+          <label for="biz-ig">Instagram</label>
+          <input id="biz-ig" placeholder="@handle" />
+        </div>
+      </div>
+      <div class="row-2">
+        <div class="field">
+          <label for="biz-open">Hours open</label>
+          <input id="biz-open" type="time" value="21:00" />
+        </div>
+        <div class="field">
+          <label for="biz-close">Hours close</label>
+          <input id="biz-close" type="time" value="02:00" />
+        </div>
+      </div>
+      <div class="field">
+        <label for="biz-category">Category</label>
+        <select id="biz-category">
+          <option>Bar</option>
+          <option>Nightclub</option>
+          <option>Restaurant</option>
+          <option>Outdoor Venue</option>
+          <option>Cafe</option>
+          <option>Retail</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="biz-about">About your spot (100–250 characters)</label>
+        <textarea id="biz-about" maxlength="250" required></textarea>
+        <p class="hint"><span id="about-count">0</span> / 250</p>
+      </div>
+      <div class="field">
+        <label for="biz-photo">Venue photo (optional)</label>
+        <input id="biz-photo" type="file" accept="image/*" />
+      </div>
+      <p class="hint">
+        <strong>Both required:</strong> type your street address <em>and</em> tap the map to place your business pin.
+        Use “Show my location” so you can see where you are (blue) while placing the venue (green).
+      </p>
+      <div class="btn-row map-actions" style="margin-bottom:0.55rem">
+        <button class="btn btn-primary" type="button" id="btn-locate-onboard">Show my location</button>
+      </div>
+      <div class="map-frame map-frame-pick">
+        <div id="map-pick" role="application" aria-label="Venue location map"></div>
+        <div class="map-tone" aria-hidden="true"></div>
+      </div>
+      <p class="hint map-legend" style="margin-top:0.55rem">
+        <span class="map-legend-swatch map-legend-business"></span> Business pin
+        <span class="map-legend-swatch map-legend-user"></span> You
+      </p>
+      <p class="hint" id="coord-hint">No business pin yet — tap the map.</p>
+      <button class="btn btn-primary" type="button" id="btn-to-verify">Continue</button>
+      <p id="setup-msg" class="msg" role="status"></p>
+    </section>
+
+    <section class="panel hidden" id="step-verify" style="grid-column:1/-1; max-width:560px; margin:0 auto; width:100%">
+      <h2 class="section-title">Verify your business</h2>
+      <p class="hint">Follow <strong>@bttrnghts</strong> on Instagram, then request verification. You can finish setup either way.</p>
+      <label class="check-row">
+        <input type="checkbox" id="did-follow" />
+        <span>I followed @bttrnghts on Instagram</span>
+      </label>
+      <div class="btn-row">
+        <button class="btn btn-ghost" type="button" id="btn-request-verify">Request verification</button>
+        <button class="btn btn-primary" type="button" id="btn-to-pin">Continue to PIN</button>
+      </div>
+      <p id="verify-msg" class="msg" role="status"></p>
+    </section>
+
+    <section class="panel hidden" id="step-pin" style="grid-column:1/-1; max-width:420px; margin:0 auto; width:100%">
+      <h2 class="section-title">Business PIN</h2>
+      <p class="hint" style="text-align:center">Choose a 4-digit PIN to lock the Info tab on this device.</p>
+      <div class="pin-dots" id="pin-dots" aria-hidden="true">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pin-pad" id="pin-pad"></div>
+      <button class="btn btn-primary" type="button" id="btn-finish" disabled>Finish setup</button>
+      <p id="pin-msg" class="msg" role="status"></p>
+    </section>
+  </main>
+  <script src="https://unpkg.com/pmtiles@3.2.1/dist/pmtiles.js"></script>
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/abuse.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/onboarding.js"></script>
+</body>
+</html>
