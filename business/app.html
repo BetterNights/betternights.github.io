@@ -6,6 +6,8 @@
   <meta name="theme-color" content="#141414" />
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://unpkg.com; style-src 'self' 'unsafe-inline' https://unpkg.com; img-src 'self' data: blob: https:; font-src 'self' data: https://protomaps.github.io; connect-src 'self' https://api.betternights.app wss://api.betternights.app http://127.0.0.1:* http://localhost:* ws://127.0.0.1:* ws://localhost:* https://bttr-nghts-map-tiles.s3.us-east-2.amazonaws.com https://protomaps.github.io https://checkout.stripe.com; worker-src blob:; child-src blob:; base-uri 'none'; form-action 'self' https://checkout.stripe.com; frame-ancestors 'none'; object-src 'none'" />
   <title>Business dashboard — Bttr Nghts</title>
+  <link rel="icon" type="image/png" href="assets/app_logo.png" />
+  <link rel="apple-touch-icon" href="assets/app_logo.png" />
   <link rel="stylesheet" href="css/portal.css" />
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" />
 </head>
@@ -219,31 +221,31 @@
           </div>
         </section>
 
-        <!-- Map (stats live under the map, same as iOS) -->
+        <!-- Map: compact top bar with live counts; map fills to the bottom -->
         <section class="tab-panel tab-panel-map active" id="tab-map">
           <div class="map-toolbar map-toolbar-compact">
             <div class="map-toolbar-row">
-              <h2 class="section-title map-toolbar-title">Your Location</h2>
+              <h2 class="map-toolbar-title">Your Location</h2>
+              <div class="map-live-stats" id="overview-stats" aria-label="Live activity">
+                <div class="map-stat" title="Active events on the map">
+                  <span class="map-stat-label">Events</span>
+                  <span class="map-stat-value" id="stat-parties">—</span>
+                </div>
+                <div class="map-stat" title="Hazard reports on the map">
+                  <span class="map-stat-label">Hazards</span>
+                  <span class="map-stat-value" id="stat-hazards">—</span>
+                </div>
+                <span class="live-feed-status" id="live-feed-status" aria-live="polite">Connecting…</span>
+              </div>
               <button class="btn btn-primary btn-inline map-locate-btn" type="button" id="btn-locate-me">Locate</button>
             </div>
             <p id="map-msg" class="msg map-msg-compact" role="status"></p>
+            <p id="overview-msg" class="msg map-overview-msg" role="status"></p>
           </div>
           <div class="map-frame map-frame-fill">
             <div id="map" role="application" aria-label="Venue and party map"></div>
             <div class="map-tone" aria-hidden="true"></div>
           </div>
-          <div class="map-stats-strip" id="overview-stats">
-            <div class="map-stat-chip">
-              <span class="label">Events</span>
-              <span class="value" id="stat-parties">—</span>
-            </div>
-            <div class="map-stat-chip">
-              <span class="label">Hazards</span>
-              <span class="value" id="stat-hazards">—</span>
-            </div>
-            <p class="hint live-feed-status" id="live-feed-status">Connecting…</p>
-          </div>
-          <p id="overview-msg" class="msg map-overview-msg" role="status"></p>
         </section>
 
         <!-- Info -->
