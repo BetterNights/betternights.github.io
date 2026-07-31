@@ -117,9 +117,9 @@
 
         .top-bar-inner {
             min-height: 74px;
-            display: flex;
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
-            justify-content: space-between;
             gap: 1rem;
         }
 
@@ -131,6 +131,7 @@
             text-decoration: none;
             font-weight: 700;
             font-size: 1rem;
+            justify-self: start;
         }
 
         .brand img {
@@ -150,7 +151,48 @@
         .top-nav {
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 0.42rem;
+            justify-self: center;
+        }
+
+        .portal-btn {
+            justify-self: end;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            padding: 0.48rem 1.05rem;
+            border-radius: 999px;
+            border: 1.5px solid #ffffff;
+            background: transparent;
+            color: var(--text);
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            transition: border-color 180ms var(--ease), background-color 180ms var(--ease), color 180ms var(--ease);
+        }
+
+        .portal-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: #ffffff;
+            color: var(--text);
+        }
+
+        body.light .portal-btn,
+        html.light .portal-btn,
+        [data-theme="light"] .portal-btn {
+            border-color: #000000;
+            color: #000000;
+        }
+
+        body.light .portal-btn:hover,
+        html.light .portal-btn:hover,
+        [data-theme="light"] .portal-btn:hover {
+            background: rgba(0, 0, 0, 0.06);
+            border-color: #000000;
+            color: #000000;
         }
 
         .top-nav a {
@@ -638,6 +680,7 @@
 
         @media (max-width: 760px) {
             .top-nav a:not(.cta-nav):not(.get-btn) { display: none; }
+            .portal-btn { padding: 0.4rem 0.85rem; font-size: 0.78rem; }
             .container { width: min(var(--container), calc(100% - 1.25rem)); }
             section { padding: 2.9rem 0; }
             h1 { font-size: clamp(2rem, 13vw, 3rem); max-width: 10.8ch; }
@@ -695,6 +738,7 @@
                 <a href="#enterprise">Enterprise</a>
                 <a href="https://apps.apple.com/us/app/bttr-nghts/id6761159922" class="get-btn" target="_blank" rel="noopener noreferrer" aria-label="Get Bttr Nghts on the App Store">Get</a>
             </nav>
+            <a href="https://betternights.app/business" class="portal-btn" target="_blank" rel="noopener noreferrer">Business Portal</a>
         </div>
     </header>
 
