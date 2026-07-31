@@ -40,7 +40,7 @@
       center: center,
       zoom: options.zoom != null ? options.zoom : 14,
       attributionControl: true,
-      cooperativeGestures: options.cooperativeGestures !== false,
+      cooperativeGestures: options.cooperativeGestures === true,
       maxTileCacheSize: 80,
       refreshExpiredTiles: false
     });

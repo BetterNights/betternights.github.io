@@ -721,14 +721,81 @@ img { max-width: 100%; display: block; }
 }
 .map-toolbar {
   flex-shrink: 0;
-  padding: 1rem 1.15rem 0.75rem;
+  padding: 0.55rem 1rem 0.4rem;
 }
 .map-toolbar-title {
-  margin-bottom: 0.55rem;
+  margin: 0;
+  font-size: 1rem;
+}
+.map-toolbar-compact .map-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+.map-toolbar-compact .map-locate-btn {
+  padding: 0.4rem 0.85rem;
+  min-height: 0;
+  font-size: 0.8rem;
+}
+.map-msg-compact {
+  margin: 0.25rem 0 0;
+  min-height: 0;
+}
+.map-msg-compact:empty,
+.map-msg-compact:not(.show) {
+  display: none;
+}
+.map-stats-strip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.55rem 1rem;
+  border-top: 1px solid var(--hairline);
+  background: var(--bg);
+}
+.map-stat-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  min-width: 4.5rem;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--card, transparent);
+}
+.map-stat-chip .label {
+  font-size: 0.65rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 650;
+}
+.map-stat-chip .value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.map-stats-strip .live-feed-status {
+  margin: 0 0 0 auto;
+  font-size: 0.72rem;
+}
+.map-overview-msg {
+  display: none;
+}
+.map-overview-msg.show {
+  display: block;
+  margin: 0;
+  padding: 0.35rem 1rem 0.55rem;
 }
 @media (min-width: 900px) {
   .map-toolbar {
-    padding: 1.15rem 1.75rem 0.85rem;
+    padding: 0.65rem 1.35rem 0.45rem;
+  }
+  .map-stats-strip {
+    padding: 0.65rem 1.35rem;
   }
 }
 .map-frame #map,

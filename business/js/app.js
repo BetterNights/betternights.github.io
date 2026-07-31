@@ -121,6 +121,7 @@
   }
 
   function setTab(name) {
+    if (name === 'overview' || name === 'schedule') name = 'map';
     document.querySelectorAll('.app-nav button[data-tab]').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-tab') === name);
     });
@@ -1437,7 +1438,9 @@
     map = BNMap.createMap('map', {
       center: [p.businessLongitude || -123.0863, p.businessLatitude || 44.0517],
       zoom: 14,
-      geolocate: true
+      geolocate: true,
+      // Allow wheel zoom without holding ⌘/Ctrl (MapLibre default cooperative gestures).
+      cooperativeGestures: false
     });
     if (!map) return;
     map.on('bnuserlocation', (e) => {
