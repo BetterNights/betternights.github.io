@@ -29,6 +29,10 @@
   let customScheduleDates = [];
   let scheduledExpanded = false;
   let realtimeClient = null;
+  let mapFeedInFlight = null;
+  let mapFeedTimer = null;
+  let mapFeedAt = 0;
+  let mapFeedQueued = false;
 
   function showMsg(el, text, ok) {
     if (!el) return;
@@ -133,7 +137,11 @@
         map.resize();
         updateMapMarkers({ fit: false });
       }, 80);
-      refreshNearbyParties();
+      // Only HTTP-refresh if the socket is down or data is stale — avoid spam.
+      const wsOk = realtimeClient && realtimeClient.isHealthy && realtimeClient.isHealthy();
+      if (!wsOk || Date.now() - mapFeedAt > 60_000) {
+        refreshMapFeed({ reason: 'tab' });
+      }
     }
     if (name === 'event' && eventMap) {
       setTimeout(() => {
@@ -154,25 +162,92 @@
     b.addEventListener('click', () => setTab(b.getAttribute('data-tab')));
   });
 
-  async function refreshOverview() {
-    try {
-      const h = await BN.api('/api/health?detailed=1');
-      $('stat-parties').textContent = String(h.parties != null ? h.parties : '—');
-      $('stat-hazards').textContent = String(h.hazards != null ? h.hazards : '—');
-      showMsg($('overview-msg'), '', true);
-      if ($('overview-msg')) $('overview-msg').className = 'msg';
-    } catch (err) {
-      if ($('stat-parties').textContent === '—' || $('stat-hazards').textContent === '—') {
-        showMsg($('overview-msg'), 'Live activity is unavailable right now.', false);
-      }
+  function setStatCounts(parties, hazards) {
+    if (parties != null && $('stat-parties')) {
+      $('stat-parties').textContent = String(parties);
+    }
+    if (hazards != null && $('stat-hazards')) {
+      $('stat-hazards').textContent = String(hazards);
     }
   }
 
   function setLiveFeedStatus(healthy) {
     const el = $('live-feed-status');
     if (!el) return;
-    el.textContent = healthy ? 'Live updates on' : 'Connecting live updates…';
+    const label = el.querySelector('.live-feed-label');
+    if (label) {
+      label.textContent = healthy ? 'Live' : 'Connecting…';
+    } else {
+      el.textContent = healthy ? 'Live' : 'Connecting…';
+    }
     el.classList.toggle('is-live', !!healthy);
+  }
+
+  /** One HTTP round-trip for map markers + counts. Prefer WebSocket for subsequent updates. */
+  async function refreshMapFeed(opts) {
+    const options = opts || {};
+    if (mapFeedInFlight) {
+      mapFeedQueued = true;
+      return mapFeedInFlight;
+    }
+    mapFeedInFlight = (async () => {
+      try {
+        const feed = await BN.api('/api/feed');
+        const parties = (feed && feed.parties) || (Array.isArray(feed) ? feed : []);
+        nearbyParties = Array.isArray(parties) ? parties : [];
+        const hazards = (feed && feed.hazards) || [];
+        const partyCount =
+          feed && feed.partyCount != null ? feed.partyCount : nearbyParties.length;
+        const hazardCount =
+          feed && feed.hazardCount != null
+            ? feed.hazardCount
+            : Array.isArray(hazards)
+              ? hazards.length
+              : null;
+        setStatCounts(partyCount, hazardCount);
+        mapFeedAt = Date.now();
+        updateMapMarkers({ fit: false });
+        if ($('overview-msg')) $('overview-msg').className = 'msg';
+        if ($('map-msg') && options.clearError) {
+          $('map-msg').className = 'msg map-msg-compact';
+          $('map-msg').textContent = '';
+        }
+      } catch (err) {
+        if (err && err.status !== 401) {
+          if ($('stat-parties').textContent === '—' || $('stat-hazards').textContent === '—') {
+            showMsg($('overview-msg'), 'Live activity is unavailable right now.', false);
+          }
+          showMsg($('map-msg'), 'Could not load nearby parties right now.', false);
+        }
+      } finally {
+        mapFeedInFlight = null;
+        if (mapFeedQueued) {
+          mapFeedQueued = false;
+          scheduleMapFeedRefresh(250);
+        }
+      }
+    })();
+    return mapFeedInFlight;
+  }
+
+  function scheduleMapFeedRefresh(delayMs) {
+    if (mapFeedTimer) clearTimeout(mapFeedTimer);
+    mapFeedTimer = setTimeout(() => {
+      mapFeedTimer = null;
+      refreshMapFeed({ reason: 'socket' });
+    }, delayMs != null ? delayMs : 400);
+  }
+
+  function onFeedChangedMessage(msg) {
+    if (msg && typeof msg === 'object') {
+      if (msg.parties != null || msg.hazards != null) {
+        setStatCounts(
+          msg.parties != null ? msg.parties : null,
+          msg.hazards != null ? msg.hazards : null
+        );
+      }
+    }
+    scheduleMapFeedRefresh(400);
   }
 
   async function refreshVerificationChip() {
@@ -1304,17 +1379,7 @@
   }
 
   async function refreshNearbyParties() {
-    try {
-      const feed = await BN.api('/api/feed');
-      const parties = (feed && feed.parties) || (Array.isArray(feed) ? feed : []);
-      nearbyParties = Array.isArray(parties) ? parties : [];
-      updateMapMarkers({ fit: false });
-    } catch (err) {
-      // Fallback: promotions-only map still works.
-      if (err && err.status !== 401) {
-        showMsg($('map-msg'), 'Could not load nearby parties right now.', false);
-      }
-    }
+    return refreshMapFeed({ reason: 'nearby' });
   }
 
   function eventPinCoords() {
@@ -1453,7 +1518,7 @@
     map.on('load', () => {
       mapReady = true;
       updateMapMarkers({ recenterVenue: true });
-      refreshNearbyParties();
+      refreshMapFeed({ reason: 'load', clearError: true });
     });
     // View-only: party pin moves only on the Event editor map (iOS Map tab parity).
   }
@@ -1667,7 +1732,7 @@
     buildInfoPad();
     initMap();
     initEventMap();
-    await refreshOverview();
+    await refreshMapFeed({ reason: 'init' });
     await refreshVerificationChip();
     await loadLiveFromServer();
     await refreshSchedule();
@@ -1678,20 +1743,20 @@
     if (window.BNRealtime && BNRealtime.createRealtime) {
       realtimeClient = BNRealtime.createRealtime({
         onStatus: setLiveFeedStatus,
-        onFeedChanged: async () => {
-          await refreshOverview();
-          await refreshNearbyParties();
-          updateMapMarkers({ fit: false });
-        }
+        onFeedChanged: onFeedChangedMessage
       });
       realtimeClient.start();
     }
 
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState !== 'visible') return;
-      refreshOverview();
-      refreshSchedule();
+      // Check before reconnect: start() is async, so isHealthy() would still be false.
+      const wsOk = realtimeClient && realtimeClient.isHealthy && realtimeClient.isHealthy();
       if (realtimeClient) realtimeClient.start();
+      if (!wsOk) {
+        refreshMapFeed({ reason: 'visible' });
+        refreshSchedule();
+      }
     });
 
     if ($('btn-toggle-scheduled')) {

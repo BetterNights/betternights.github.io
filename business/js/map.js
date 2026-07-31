@@ -34,17 +34,26 @@
     if (!el || typeof maplibregl === 'undefined') return null;
 
     const center = options.center || FALLBACK_CENTER;
+    // Always allow wheel / trackpad zoom without ⌘/Ctrl unless explicitly opted in.
+    const wantCoop = options.cooperativeGestures === true;
     const map = new maplibregl.Map({
       container: containerId,
       style: STYLE_URL,
       center: center,
       zoom: options.zoom != null ? options.zoom : 14,
       attributionControl: true,
-      cooperativeGestures: options.cooperativeGestures === true,
+      cooperativeGestures: wantCoop,
       maxTileCacheSize: 80,
       refreshExpiredTiles: false
     });
 
+    if (!wantCoop) {
+      try {
+        if (map.scrollZoom && typeof map.scrollZoom.enable === 'function') {
+          map.scrollZoom.enable();
+        }
+      } catch (_) {}
+    }
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
 
     // Built-in locate control — clicking it is a user gesture, so the browser shows the permission popup.

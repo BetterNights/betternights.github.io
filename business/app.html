@@ -221,21 +221,25 @@
           </div>
         </section>
 
-        <!-- Map: compact top bar with live counts; map fills to the bottom -->
+        <!-- Map: slim live bar; map fills the rest -->
         <section class="tab-panel tab-panel-map active" id="tab-map">
           <div class="map-toolbar map-toolbar-compact">
             <div class="map-toolbar-row">
-              <h2 class="map-toolbar-title">Your Location</h2>
               <div class="map-live-stats" id="overview-stats" aria-label="Live activity">
-                <div class="map-stat" title="Active events on the map">
-                  <span class="map-stat-label">Events</span>
+                <div class="map-stat map-stat-parties" title="Active events on the map">
+                  <span class="map-stat-swatch map-stat-swatch-party" aria-hidden="true"></span>
                   <span class="map-stat-value" id="stat-parties">—</span>
+                  <span class="map-stat-label">Events</span>
                 </div>
-                <div class="map-stat" title="Hazard reports on the map">
-                  <span class="map-stat-label">Hazards</span>
+                <div class="map-stat map-stat-hazards" title="Hazard reports on the map">
+                  <span class="map-stat-swatch map-stat-swatch-hazard" aria-hidden="true"></span>
                   <span class="map-stat-value" id="stat-hazards">—</span>
+                  <span class="map-stat-label">Hazards</span>
                 </div>
-                <span class="live-feed-status" id="live-feed-status" aria-live="polite">Connecting…</span>
+                <span class="live-feed-status" id="live-feed-status" aria-live="polite">
+                  <span class="live-feed-dot" aria-hidden="true"></span>
+                  <span class="live-feed-label">Connecting…</span>
+                </span>
               </div>
               <button class="btn btn-primary btn-inline map-locate-btn" type="button" id="btn-locate-me">Locate</button>
             </div>
