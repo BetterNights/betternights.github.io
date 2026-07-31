@@ -14,10 +14,21 @@
   let userLocation = null;
   let eventPinPlaced = false;
   let editingLive = false;
+  let planningAhead = false;
   let infoUnlocked = false;
   let infoPinDraft = '';
   let mapReady = false;
   let eventMapReady = false;
+  let scheduledOccurrences = [];
+  let unitAmountCents = 799;
+  let calCursor = new Date();
+  calCursor.setDate(1);
+  calCursor.setHours(12, 0, 0, 0);
+  let previewWindows = [];
+  let pendingSeriesId = null;
+  let customScheduleDates = [];
+  let scheduledExpanded = false;
+  let realtimeClient = null;
 
   function showMsg(el, text, ok) {
     if (!el) return;
@@ -72,9 +83,18 @@
     const start = new Date();
     start.setMinutes(0, 0, 0);
     start.setHours(21);
+    // If tonight's default window is already over, roll to tomorrow.
+    const endProbe = new Date(start.getTime() + 5 * 60 * 60 * 1000);
+    if (endProbe.getTime() <= Date.now()) {
+      start.setDate(start.getDate() + 1);
+    }
     const end = new Date(start.getTime() + 5 * 60 * 60 * 1000);
     $('ev-start').value = toLocalInput(start);
     $('ev-end').value = toLocalInput(end);
+  }
+
+  function appPathClean() {
+    return portalHref('app.html');
   }
 
   function portalHref(page) {
@@ -101,7 +121,7 @@
   }
 
   function setTab(name) {
-    document.querySelectorAll('.nav-bottom button').forEach((b) => {
+    document.querySelectorAll('.app-nav button[data-tab]').forEach((b) => {
       b.classList.toggle('active', b.getAttribute('data-tab') === name);
     });
     document.querySelectorAll('.tab-panel').forEach((p) => {
@@ -111,14 +131,17 @@
       setTimeout(() => {
         map.resize();
         updateMapMarkers({ fit: false });
-      }, 50);
+      }, 80);
       refreshNearbyParties();
     }
     if (name === 'event' && eventMap) {
       setTimeout(() => {
         eventMap.resize();
         syncEventMapMarkers();
-      }, 50);
+      }, 80);
+    }
+    if (name === 'event') {
+      renderScheduledSection();
     }
     if (name === 'info' && !infoUnlocked) {
       infoPinDraft = '';
@@ -126,38 +149,30 @@
     }
   }
 
-  document.querySelectorAll('.nav-bottom button').forEach((b) => {
+  document.querySelectorAll('.app-nav button[data-tab]').forEach((b) => {
     b.addEventListener('click', () => setTab(b.getAttribute('data-tab')));
   });
 
   async function refreshOverview() {
-    if (window.BNAbuse) {
-      const wait = BNAbuse.cooldownRemaining('overview');
-      if (wait > 0) {
-        showMsg($('overview-msg'), 'Refreshing too fast — wait a moment.', false);
-        return;
-      }
-      BNAbuse.startCooldown('overview', 4000);
-    }
     try {
       const h = await BN.api('/api/health?detailed=1');
       $('stat-parties').textContent = String(h.parties != null ? h.parties : '—');
       $('stat-hazards').textContent = String(h.hazards != null ? h.hazards : '—');
-      $('stat-users').textContent = String(h.connectedUsers != null ? h.connectedUsers : '—');
       showMsg($('overview-msg'), '', true);
-      $('overview-msg').className = 'msg';
+      if ($('overview-msg')) $('overview-msg').className = 'msg';
     } catch (err) {
-      if (err && err.status === 429) {
-        showMsg($('overview-msg'), err.message || 'Rate limited. Try again shortly.', false);
-        if (window.BNAbuse && err.retryAfterSec) {
-          BNAbuse.startCooldown('overview', err.retryAfterSec * 1000);
-        }
-        return;
+      if ($('stat-parties').textContent === '—' || $('stat-hazards').textContent === '—') {
+        showMsg($('overview-msg'), 'Live activity is unavailable right now.', false);
       }
-      showMsg($('overview-msg'), 'Live activity is unavailable right now.', false);
     }
   }
-  $('btn-refresh-overview').addEventListener('click', refreshOverview);
+
+  function setLiveFeedStatus(healthy) {
+    const el = $('live-feed-status');
+    if (!el) return;
+    el.textContent = healthy ? 'Live updates on' : 'Connecting live updates…';
+    el.classList.toggle('is-live', !!healthy);
+  }
 
   async function refreshVerificationChip() {
     const p = profile();
@@ -257,9 +272,12 @@
       $('event-live').classList.add('hidden');
       $('event-editor').classList.remove('hidden');
       $('btn-start-event').classList.remove('hidden');
+      $('btn-schedule-pay').classList.remove('hidden');
+      $('schedule-box').classList.remove('hidden');
       $('btn-save-edit').classList.add('hidden');
       $('editor-title').textContent = 'New event';
       editingLive = false;
+      planningAhead = false;
       return;
     }
     $('event-live').classList.remove('hidden');
@@ -268,8 +286,478 @@
     const start = livePromo.startAt ? new Date(livePromo.startAt).toLocaleString() : '';
     const end = livePromo.endAt ? new Date(livePromo.endAt).toLocaleString() : '';
     $('live-meta').textContent = [start, end].filter(Boolean).join(' → ');
+    if (planningAhead) {
+      $('event-editor').classList.remove('hidden');
+      $('btn-start-event').classList.add('hidden');
+      $('btn-save-edit').classList.add('hidden');
+      $('btn-schedule-pay').classList.remove('hidden');
+      $('schedule-box').classList.remove('hidden');
+      $('editor-title').textContent = 'Schedule upcoming nights';
+      return;
+    }
     if (!editingLive) {
       $('event-editor').classList.add('hidden');
+    }
+  }
+
+  function money(cents) {
+    const n = Number(cents);
+    if (!Number.isFinite(n)) return '$—';
+    return '$' + (n / 100).toFixed(2);
+  }
+
+  function scheduleDraftKey() {
+    return 'promoScheduleDraft';
+  }
+
+  function maxCountForRecurrence(recurrence) {
+    if (recurrence === 'weekly') return 52;
+    if (recurrence === 'monthly') return 24;
+    if (recurrence === 'annually') return 5;
+    if (recurrence === 'custom') return 10;
+    return 1;
+  }
+
+  function addMonthsClamped(date, months) {
+    const d = new Date(date.getTime());
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + months);
+    const last = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    d.setDate(Math.min(day, last));
+    return d;
+  }
+
+  function parseCustomDateLines(text, startIso, endIso) {
+    // Legacy fallback if a string is passed; prefer customScheduleDates.
+    void text;
+    return buildCustomWindows(startIso, endIso);
+  }
+
+  function ymdLocal(d) {
+    const pad = (n) => String(n).padStart(2, '0');
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+
+  function buildCustomWindows(startIso, endIso) {
+    const start0 = new Date(startIso);
+    const end0 = new Date(endIso);
+    if (Number.isNaN(start0.getTime()) || Number.isNaN(end0.getTime()) || end0 <= start0) return [];
+    const durationMs = end0.getTime() - start0.getTime();
+    const localParts = String($('ev-start') && $('ev-start').value ? $('ev-start').value : '').match(
+      /T(\d{2}):(\d{2})/
+    );
+    const hour = localParts ? Number(localParts[1]) : start0.getHours();
+    const minute = localParts ? Number(localParts[2]) : start0.getMinutes();
+    const out = [];
+    const seen = new Set();
+    for (const dayStr of customScheduleDates) {
+      const m = String(dayStr || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) continue;
+      const localStart = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), hour, minute, 0, 0);
+      if (Number.isNaN(localStart.getTime())) continue;
+      const iso = localStart.toISOString();
+      if (seen.has(iso)) continue;
+      seen.add(iso);
+      out.push({
+        startAt: iso,
+        endAt: new Date(localStart.getTime() + durationMs).toISOString()
+      });
+      if (out.length >= 10) break;
+    }
+    return out;
+  }
+
+  function renderCustomDatesEditor() {
+    const list = $('ev-custom-dates-list');
+    if (!list) return;
+    list.innerHTML = '';
+    customScheduleDates.forEach((day, index) => {
+      const row = document.createElement('div');
+      row.className = 'custom-date-row';
+      const input = document.createElement('input');
+      input.type = 'date';
+      input.value = day;
+      input.addEventListener('change', () => {
+        customScheduleDates[index] = input.value;
+        updateSchedulePreview();
+      });
+      row.appendChild(input);
+      if (customScheduleDates.length > 1) {
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.className = 'btn btn-ghost btn-inline';
+        rm.textContent = 'Remove';
+        rm.addEventListener('click', () => {
+          customScheduleDates.splice(index, 1);
+          renderCustomDatesEditor();
+          updateSchedulePreview();
+        });
+        row.appendChild(rm);
+      }
+      list.appendChild(row);
+    });
+  }
+
+  function ensureCustomDatesSeeded() {
+    if (!customScheduleDates.length) {
+      const startAt = safeIsoFromInput($('ev-start'));
+      const d = startAt ? new Date(startAt) : new Date();
+      customScheduleDates = [ymdLocal(Number.isNaN(d.getTime()) ? new Date() : d)];
+    }
+    renderCustomDatesEditor();
+  }
+
+  function expandLocalWindows(startIso, endIso, recurrence, count, customWindows) {
+    if (recurrence === 'custom') {
+      return Array.isArray(customWindows) ? customWindows.slice(0, 10) : [];
+    }
+    const start0 = new Date(startIso);
+    const end0 = new Date(endIso);
+    if (Number.isNaN(start0.getTime()) || Number.isNaN(end0.getTime()) || end0 <= start0) {
+      return [];
+    }
+    const durationMs = end0.getTime() - start0.getTime();
+    const rec = recurrence === 'once' ? 'once' : recurrence;
+    const max = maxCountForRecurrence(rec);
+    const n = Math.min(Math.max(1, Math.floor(Number(count) || 1)), max);
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      let start;
+      if (i === 0) start = new Date(start0.getTime());
+      else if (rec === 'weekly') {
+        start = new Date(start0.getTime());
+        start.setDate(start.getDate() + 7 * i);
+      } else if (rec === 'monthly') start = addMonthsClamped(start0, i);
+      else if (rec === 'annually') start = addMonthsClamped(start0, i * 12);
+      else break;
+      out.push({
+        startAt: start.toISOString(),
+        endAt: new Date(start.getTime() + durationMs).toISOString()
+      });
+    }
+    return out;
+  }
+
+  function formatWindowLabel(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
+  }
+
+  function updateSchedulePreview() {
+    const repeatEl = $('ev-repeat');
+    const countEl = $('ev-count');
+    const countWrap = $('ev-count-wrap');
+    const customWrap = $('ev-custom-dates-wrap');
+    if (!repeatEl || !countEl) return;
+    const recurrence = repeatEl.value || 'once';
+    const max = maxCountForRecurrence(recurrence);
+    const isCustom = recurrence === 'custom';
+    if (countWrap) countWrap.hidden = isCustom;
+    if (customWrap) customWrap.hidden = !isCustom;
+    if (isCustom) ensureCustomDatesSeeded();
+    countEl.max = String(max);
+    if (recurrence === 'once' || isCustom) {
+      countEl.disabled = true;
+      countEl.value = '1';
+    } else {
+      countEl.disabled = false;
+      let n = Math.floor(Number(countEl.value) || 1);
+      if (n < 1) n = 1;
+      if (n > max) n = max;
+      countEl.value = String(n);
+    }
+    const startAt = safeIsoFromInput($('ev-start'));
+    const endAt = safeIsoFromInput($('ev-end'));
+    const customWindows = isCustom && startAt && endAt ? buildCustomWindows(startAt, endAt) : null;
+    const count = isCustom ? (customWindows ? customWindows.length : 0) : Number(countEl.value) || 1;
+
+    // Prefer server expand so client/server stay aligned.
+    if (startAt && endAt && (!isCustom || (customWindows && customWindows.length))) {
+      BN.api('/api/web/promotions/schedule/preview', {
+        method: 'POST',
+        body: {
+          startAt,
+          endAt,
+          recurrence,
+          count: Math.max(1, count),
+          windows: customWindows || undefined
+        },
+        timeoutMs: 12000
+      })
+        .then((res) => {
+          if (res.unitAmountCents != null) unitAmountCents = Number(res.unitAmountCents) || unitAmountCents;
+          previewWindows = Array.isArray(res.windows) ? res.windows : [];
+          renderSchedulePreviewUi(res.firstWindowValid !== false, res.firstWindowError || '', isCustom);
+        })
+        .catch(() => {
+          previewWindows = expandLocalWindows(startAt, endAt, recurrence, count, customWindows);
+          renderSchedulePreviewUi(true, '', isCustom);
+        });
+      return;
+    }
+    previewWindows = [];
+    renderSchedulePreviewUi(true, isCustom ? 'Add at least one custom date.' : '', isCustom);
+  }
+
+  function shortPreviewChip(iso) {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return '—';
+    return d.toLocaleString(undefined, { weekday: 'short', day: 'numeric' });
+  }
+
+  function renderSchedulePreviewUi(firstOk, firstErr, isCustom) {
+    const count =
+      isCustom
+        ? previewWindows.length || customScheduleDates.length || 1
+        : previewWindows.length || Number(($('ev-count') && $('ev-count').value) || 1);
+    const total = unitAmountCents * Math.max(1, count);
+    $('schedule-price-hint').textContent =
+      count +
+      ' event' +
+      (count === 1 ? '' : 's') +
+      ' × ' +
+      money(unitAmountCents) +
+      ' = ' +
+      money(total) +
+      (count > 1 ? ' · paid up front' : '');
+    const preview = $('schedule-preview');
+    preview.innerHTML = '';
+    if (isCustom) {
+      if (!firstOk && firstErr) {
+        const warn = document.createElement('p');
+        warn.className = 'hint';
+        warn.style.color = '#ffb4af';
+        warn.textContent = firstErr;
+        preview.appendChild(warn);
+      }
+      return;
+    }
+    if (!previewWindows.length) {
+      preview.innerHTML = '<p class="hint">Pick valid start and end times to preview dates.</p>';
+      return;
+    }
+    if (!firstOk && firstErr) {
+      const warn = document.createElement('p');
+      warn.className = 'hint';
+      warn.style.color = '#ffb4af';
+      warn.textContent = firstErr;
+      preview.appendChild(warn);
+    }
+    const strip = document.createElement('div');
+    strip.className = 'sched-pill-strip';
+    previewWindows.slice(0, 10).forEach((w) => {
+      const pill = document.createElement('span');
+      pill.className = 'sched-pill';
+      pill.textContent = shortPreviewChip(w.startAt);
+      strip.appendChild(pill);
+    });
+    if (previewWindows.length > 10) {
+      const more = document.createElement('span');
+      more.className = 'sched-pill sched-pill-more';
+      more.textContent = '+' + (previewWindows.length - 10);
+      strip.appendChild(more);
+    }
+    preview.appendChild(strip);
+  }
+
+  function validatePromoForPay(promo) {
+    if (!promo.headline) {
+      showMsg($('event-msg'), 'Add a headline.', false);
+      return false;
+    }
+    if (!eventPinPlaced || !eventPinCoords()) {
+      showMsg(
+        $('event-msg'),
+        'Place the party on the map below (tap to set the lavender pin). Your location (blue) and business (green) should also be visible.',
+        false
+      );
+      return false;
+    }
+    if (promo.latitude == null || promo.longitude == null) {
+      showMsg($('event-msg'), 'Event map pin is missing. Tap the map to place the party.', false);
+      return false;
+    }
+    return true;
+  }
+
+  async function refreshSchedule() {
+    try {
+      const res = await BN.api('/api/web/promotions/schedule');
+      scheduledOccurrences = Array.isArray(res.occurrences) ? res.occurrences : [];
+      if (res.unitAmountCents != null) unitAmountCents = Number(res.unitAmountCents) || unitAmountCents;
+      renderScheduledSection();
+      updateSchedulePreview();
+      showMsg($('schedule-msg'), '', true);
+      if ($('schedule-msg')) $('schedule-msg').className = 'msg';
+    } catch (err) {
+      showMsg($('schedule-msg'), (err && err.message) || 'Could not load schedule.', false);
+    }
+  }
+
+  function upcomingScheduled() {
+    return scheduledOccurrences
+      .filter((o) => o && (o.status === 'scheduled' || o.status === 'live'))
+      .slice()
+      .sort((a, b) => String(a.startAt || '').localeCompare(String(b.startAt || '')));
+  }
+
+  function renderScheduledSection() {
+    const section = $('scheduled-events-section');
+    const body = $('scheduled-events-body');
+    const countEl = $('scheduled-count');
+    const bar = $('btn-toggle-scheduled');
+    const upcoming = upcomingScheduled();
+    if (!section) return;
+    if (!upcoming.length) {
+      section.classList.add('hidden');
+      return;
+    }
+    section.classList.remove('hidden');
+    if (countEl) countEl.textContent = String(upcoming.length);
+    if (body) body.classList.toggle('hidden', !scheduledExpanded);
+    if (bar) {
+      bar.setAttribute('aria-expanded', scheduledExpanded ? 'true' : 'false');
+      bar.classList.toggle('is-open', scheduledExpanded);
+    }
+    renderCalendar();
+    renderScheduleList();
+  }
+
+  function renderScheduleList() {
+    const el = $('schedule-list');
+    if (!el) return;
+    el.innerHTML = '';
+    const upcoming = upcomingScheduled();
+    if (!upcoming.length) {
+      el.innerHTML = '';
+      return;
+    }
+    upcoming.forEach((o) => {
+      const card = document.createElement('div');
+      card.className = 'schedule-item';
+      const status = String(o.status || 'scheduled');
+      card.innerHTML =
+        '<div class="si-top"><span class="si-title"></span><span class="si-status ' +
+        status +
+        '"></span></div><p class="si-meta"></p>';
+      card.querySelector('.si-title').textContent = o.headline || 'Event';
+      card.querySelector('.si-status').textContent = status;
+      card.querySelector('.si-meta').textContent =
+        formatWindowLabel(o.startAt) + (o.endAt ? ' → ' + formatWindowLabel(o.endAt) : '');
+      if (status === 'scheduled') {
+        const actions = document.createElement('div');
+        actions.className = 'si-actions btn-row';
+        const cancel = document.createElement('button');
+        cancel.type = 'button';
+        cancel.className = 'btn btn-ghost btn-inline';
+        cancel.textContent = 'Cancel this night';
+        cancel.addEventListener('click', async () => {
+          if (!window.confirm('Cancel this scheduled night? Payment is not refunded automatically.')) return;
+          try {
+            await BN.api('/api/web/promotions/schedule/' + encodeURIComponent(o.id), {
+              method: 'DELETE'
+            });
+            await refreshSchedule();
+            showMsg($('schedule-msg'), 'Night cancelled.', true);
+          } catch (err) {
+            showMsg($('schedule-msg'), (err && err.message) || 'Could not cancel.', false);
+          }
+        });
+        actions.appendChild(cancel);
+        card.appendChild(actions);
+      }
+      el.appendChild(card);
+    });
+  }
+
+  function renderCalendar() {
+    const grid = $('cal-grid');
+    const label = $('cal-month-label');
+    if (!grid || !label) return;
+    const year = calCursor.getFullYear();
+    const month = calCursor.getMonth();
+    label.textContent = calCursor.toLocaleString(undefined, { month: 'long', year: 'numeric' });
+    grid.innerHTML = '';
+    ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach((d) => {
+      const h = document.createElement('div');
+      h.className = 'cal-dow';
+      h.textContent = d;
+      grid.appendChild(h);
+    });
+    const first = new Date(year, month, 1);
+    const startPad = first.getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const today = new Date();
+    const byDay = {};
+    scheduledOccurrences.forEach((o) => {
+      if (!o || !o.startAt) return;
+      const d = new Date(o.startAt);
+      if (Number.isNaN(d.getTime())) return;
+      if (d.getFullYear() !== year || d.getMonth() !== month) return;
+      const key = d.getDate();
+      if (!byDay[key]) byDay[key] = [];
+      byDay[key].push(o);
+    });
+    for (let i = 0; i < startPad; i += 1) {
+      const cell = document.createElement('div');
+      cell.className = 'cal-cell';
+      grid.appendChild(cell);
+    }
+    for (let day = 1; day <= daysInMonth; day += 1) {
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'cal-cell in-month';
+      if (
+        today.getFullYear() === year &&
+        today.getMonth() === month &&
+        today.getDate() === day
+      ) {
+        cell.classList.add('today');
+      }
+      const events = byDay[day] || [];
+      if (events.length) cell.classList.add('has-events');
+      let primary = '';
+      events.forEach((e) => {
+        const s = String(e.status || 'scheduled');
+        if (!primary) primary = s;
+        else if (s === 'live') primary = 'live';
+      });
+      if (primary === 'live') cell.classList.add('mark-live');
+      else if (primary === 'scheduled') cell.classList.add('mark-scheduled');
+      else if (events.length) cell.classList.add('mark-done');
+      const dayNum = document.createElement('span');
+      dayNum.className = 'cal-day-num';
+      dayNum.textContent = String(day);
+      cell.appendChild(dayNum);
+      if (events.length) {
+        cell.title = events
+          .map((e) => (e.headline || 'Event') + ' (' + (e.status || '') + ')')
+          .join('\n');
+        cell.addEventListener('click', () => {
+          const lines = events
+            .map(
+              (e) =>
+                '• ' +
+                (e.headline || 'Event') +
+                ' — ' +
+                formatWindowLabel(e.startAt) +
+                ' (' +
+                (e.status || '') +
+                ')'
+            )
+            .join('\n');
+          showMsg($('schedule-msg'), lines, true);
+        });
+      }
+      grid.appendChild(cell);
     }
   }
 
@@ -290,8 +778,11 @@
         editingLive = false;
         $('event-editor').classList.remove('hidden');
         $('btn-start-event').classList.remove('hidden');
+        $('btn-schedule-pay').classList.remove('hidden');
+        $('schedule-box').classList.remove('hidden');
         $('btn-save-edit').classList.add('hidden');
         setTab('event');
+        updateSchedulePreview();
       });
       el.appendChild(b);
       const del = document.createElement('button');
@@ -343,22 +834,7 @@
 
   $('btn-start-event').addEventListener('click', async () => {
     const promo = buildPromoFromForm();
-    if (!promo.headline) {
-      showMsg($('event-msg'), 'Add a headline.', false);
-      return;
-    }
-    if (!eventPinPlaced || !eventPinCoords()) {
-      showMsg(
-        $('event-msg'),
-        'Place the party on the map below (tap to set the lavender pin). Your location (blue) and business (green) should also be visible.',
-        false
-      );
-      return;
-    }
-    if (promo.latitude == null || promo.longitude == null) {
-      showMsg($('event-msg'), 'Event map pin is missing. Tap the map to place the party.', false);
-      return;
-    }
+    if (!validatePromoForPay(promo)) return;
     try {
       const slim = Object.assign({}, promo);
       delete slim.inviteImageBase64;
@@ -376,7 +852,7 @@
       try {
         checkout = await BN.api('/api/web/promotions/checkout', {
           method: 'POST',
-          body: { promotionId: promo.id, businessName: promo.businessName },
+          body: { promotionId: promo.id, businessName: promo.businessName, quantity: 1 },
           timeoutMs: 20000
         });
       } catch (err) {
@@ -423,6 +899,136 @@
     }
   });
 
+  $('btn-schedule-pay').addEventListener('click', async () => {
+    updateSchedulePreview();
+    // Give preview a tick to refresh from server when possible.
+    await new Promise((r) => setTimeout(r, 80));
+    const promo = buildPromoFromForm();
+    if (!validatePromoForPay(promo)) return;
+    const recurrence = ($('ev-repeat') && $('ev-repeat').value) || 'once';
+    const startAt = promo.startAt;
+    const endAt = promo.endAt;
+    const customWindows = recurrence === 'custom' ? buildCustomWindows(startAt, endAt) : null;
+    const count =
+      recurrence === 'custom'
+        ? (customWindows && customWindows.length) || 0
+        : Number(($('ev-count') && $('ev-count').value) || 1);
+    let windows = previewWindows.slice();
+    if (!windows.length) {
+      windows = expandLocalWindows(startAt, endAt, recurrence, count, customWindows);
+    }
+    if (!windows.length) {
+      showMsg(
+        $('event-msg'),
+        recurrence === 'custom'
+          ? 'Add at least one custom date.'
+          : 'Pick valid start/end times for the schedule.',
+        false
+      );
+      return;
+    }
+    const seriesId = BN.uuid();
+    pendingSeriesId = seriesId;
+    const promoForServer = Object.assign({}, promo, { id: seriesId });
+    const scheduleDraft = {
+      seriesId,
+      recurrence,
+      count: windows.length,
+      windows,
+      startAt: promo.startAt,
+      endAt: promo.endAt,
+      promotion: (() => {
+        const slim = Object.assign({}, promoForServer);
+        delete slim.inviteImageBase64;
+        return slim;
+      })()
+    };
+    try {
+      BN.storeSet(scheduleDraftKey(), scheduleDraft);
+      BN.storeSet(draftKey(), scheduleDraft.promotion);
+    } catch (_) {}
+
+    $('btn-schedule-pay').disabled = true;
+    showMsg(
+      $('event-msg'),
+      'Starting checkout for ' + windows.length + ' event' + (windows.length === 1 ? '' : 's') + '…',
+      true
+    );
+    try {
+      let checkout = null;
+      try {
+        checkout = await BN.api('/api/web/promotions/checkout', {
+          method: 'POST',
+          body: {
+            promotionId: seriesId,
+            seriesId,
+            businessName: promo.businessName,
+            quantity: windows.length,
+            kind: 'business_promotion_schedule',
+            recurrence,
+            startAt: promo.startAt,
+            endAt: promo.endAt,
+            promotion: promoForServer
+          },
+          timeoutMs: 20000
+        });
+      } catch (err) {
+        const stripeMissing =
+          err && (err.code === 'STRIPE_NOT_CONFIGURED' || err.status === 503);
+        if (stripeMissing && BN.cfg && BN.cfg.isLocalApi) {
+          checkout = null;
+        } else if (stripeMissing) {
+          showMsg(
+            $('event-msg'),
+            'Card checkout is not set up on the API yet. Add STRIPE_SECRET_KEY on the server, then redeploy.',
+            false
+          );
+          return;
+        } else {
+          throw err;
+        }
+      }
+      if (checkout && checkout.url) {
+        showMsg($('event-msg'), 'Redirecting to Stripe…', true);
+        window.location.href = checkout.url;
+        return;
+      }
+      if (!(BN.cfg && BN.cfg.isLocalApi)) {
+        showMsg($('event-msg'), 'Could not start Stripe Checkout. Try again in a moment.', false);
+        return;
+      }
+      const created = await BN.api('/api/web/promotions/schedule', {
+        method: 'POST',
+        body: {
+          seriesId,
+          promotion: promoForServer,
+          recurrence,
+          count: windows.length,
+          startAt: promo.startAt,
+          endAt: promo.endAt,
+          windows: recurrence === 'custom' ? windows : undefined
+        }
+      });
+      BN.storeRemove(scheduleDraftKey());
+      scheduledOccurrences =
+        (created.all && created.all.occurrences) || created.occurrences || [];
+      planningAhead = false;
+      await loadLiveFromServer();
+      setTab('event');
+      scheduledExpanded = true;
+      renderScheduledSection();
+      showMsg(
+        $('event-msg'),
+        'Scheduled ' + windows.length + ' night(s)' + (BN.cfg && BN.cfg.isLocalApi ? ' (local unpaid).' : '.'),
+        true
+      );
+    } catch (err) {
+      showMsg($('event-msg'), err.message || 'Could not schedule events.', false);
+    } finally {
+      $('btn-schedule-pay').disabled = false;
+    }
+  });
+
   async function finishCheckoutPublish(sessionId) {
     const draft = BN.storeGet(draftKey(), null);
     const pendingId = BN.storeGet('pendingPublishId', '');
@@ -448,15 +1054,93 @@
     }
   }
 
+  async function finishScheduleCheckout(sessionId) {
+    const draft = BN.storeGet(scheduleDraftKey(), null);
+    const seriesId = (draft && draft.seriesId) || BN.storeGet('pendingPublishId', '') || '';
+    let promotion = draft && draft.promotion ? Object.assign({}, draft.promotion) : null;
+    // Re-attach venue image stripped from localStorage draft.
+    if (promotion) {
+      const img = profile().businessImageBase64;
+      if (img && !promotion.inviteImageBase64) promotion.inviteImageBase64 = img;
+    }
+    try {
+      const body = {
+        seriesId: seriesId || (promotion && promotion.id) || undefined,
+        stripeCheckoutSessionId: sessionId,
+        recurrence: draft && draft.recurrence,
+        count: draft && draft.count,
+        startAt: draft && draft.startAt,
+        endAt: draft && draft.endAt,
+        windows: draft && draft.windows
+      };
+      if (promotion) body.promotion = promotion;
+      const created = await BN.api('/api/web/promotions/schedule', {
+        method: 'POST',
+        body
+      });
+      BN.storeRemove(scheduleDraftKey());
+      scheduledOccurrences =
+        (created.all && created.all.occurrences) || created.occurrences || [];
+      planningAhead = false;
+      await loadLiveFromServer();
+      const n = (created.occurrences && created.occurrences.length) || (draft && draft.count) || 0;
+      showMsg(
+        $('event-msg'),
+        'Payment received — ' + n + ' night' + (n === 1 ? '' : 's') + ' scheduled.',
+        true
+      );
+      setTab('event');
+      scheduledExpanded = true;
+      renderScheduledSection();
+    } catch (err) {
+      showMsg(
+        $('event-msg'),
+        err.message || 'Paid, but scheduling failed. Try again or contact support.',
+        false
+      );
+      setTab('event');
+    }
+  }
+
   $('btn-edit-live').addEventListener('click', () => {
     if (!livePromo) return;
     editingLive = true;
+    planningAhead = false;
     fillFormFromPromo(livePromo);
     $('event-editor').classList.remove('hidden');
     $('btn-start-event').classList.add('hidden');
+    $('btn-schedule-pay').classList.add('hidden');
+    $('schedule-box').classList.add('hidden');
     $('btn-save-edit').classList.remove('hidden');
     $('editor-title').textContent = 'Edit live event';
   });
+
+  function openPlanAheadEditor() {
+    planningAhead = true;
+    editingLive = false;
+    if (livePromo) fillFormFromPromo(livePromo);
+    defaultTimes();
+    // Nudge first night to next week so it doesn't collide with a live pin tonight.
+    const start = new Date();
+    start.setDate(start.getDate() + 7);
+    start.setMinutes(0, 0, 0);
+    start.setHours(21);
+    const end = new Date(start.getTime() + 5 * 60 * 60 * 1000);
+    $('ev-start').value = toLocalInput(start);
+    $('ev-end').value = toLocalInput(end);
+    if ($('ev-repeat')) $('ev-repeat').value = 'weekly';
+    if ($('ev-count')) {
+      $('ev-count').disabled = false;
+      $('ev-count').value = '4';
+    }
+    renderLive();
+    updateSchedulePreview();
+    setTab('event');
+  }
+
+  if ($('btn-plan-ahead')) {
+    $('btn-plan-ahead').addEventListener('click', openPlanAheadEditor);
+  }
 
   $('btn-save-edit').addEventListener('click', async () => {
     if (!livePromo) return;
@@ -768,10 +1452,7 @@
       updateMapMarkers({ recenterVenue: true });
       refreshNearbyParties();
     });
-    map.on('click', (e) => {
-      if (!e || !e.lngLat) return;
-      setEventPin(e.lngLat.lat, e.lngLat.lng);
-    });
+    // View-only: party pin moves only on the Event editor map (iOS Map tab parity).
   }
 
   function initEventMap() {
@@ -827,15 +1508,6 @@
         centerEventMap: true
       });
       $('btn-locate-event').disabled = false;
-    });
-  }
-  if ($('btn-refresh-map')) {
-    $('btn-refresh-map').addEventListener('click', async () => {
-      $('btn-refresh-map').disabled = true;
-      await refreshNearbyParties();
-      updateMapMarkers({ fit: true });
-      showMsg($('map-msg'), 'Map refreshed.', true);
-      $('btn-refresh-map').disabled = false;
     });
   }
 
@@ -960,15 +1632,13 @@
       const mine = rows.find(
         (r) => r && String(r.businessName || '').toLowerCase() === name
       );
-      if (mine) {
-        livePromo = mine;
-        if (mine.latitude != null && mine.longitude != null) {
-          setEventPin(Number(mine.latitude), Number(mine.longitude), { silent: true });
-        }
-        renderLive();
-        updateMapMarkers();
-        syncEventMapMarkers();
+      livePromo = mine || null;
+      if (mine && mine.latitude != null && mine.longitude != null) {
+        setEventPin(Number(mine.latitude), Number(mine.longitude), { silent: true });
       }
+      renderLive();
+      updateMapMarkers();
+      syncEventMapMarkers();
     } catch (_) {}
   }
 
@@ -997,17 +1667,93 @@
     await refreshOverview();
     await refreshVerificationChip();
     await loadLiveFromServer();
+    await refreshSchedule();
     renderPast();
     renderLive();
+    updateSchedulePreview();
+
+    if (window.BNRealtime && BNRealtime.createRealtime) {
+      realtimeClient = BNRealtime.createRealtime({
+        onStatus: setLiveFeedStatus,
+        onFeedChanged: async () => {
+          await refreshOverview();
+          await refreshNearbyParties();
+          updateMapMarkers({ fit: false });
+        }
+      });
+      realtimeClient.start();
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState !== 'visible') return;
+      refreshOverview();
+      refreshSchedule();
+      if (realtimeClient) realtimeClient.start();
+    });
+
+    if ($('btn-toggle-scheduled')) {
+      $('btn-toggle-scheduled').addEventListener('click', () => {
+        scheduledExpanded = !scheduledExpanded;
+        renderScheduledSection();
+      });
+    }
+    if ($('btn-add-custom-date')) {
+      $('btn-add-custom-date').addEventListener('click', () => {
+        if (customScheduleDates.length >= 10) return;
+        const last = customScheduleDates[customScheduleDates.length - 1];
+        let next = new Date();
+        if (last) {
+          const m = String(last).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+          if (m) next = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]) + 1);
+        }
+        customScheduleDates.push(ymdLocal(next));
+        renderCustomDatesEditor();
+        updateSchedulePreview();
+      });
+    }
+
+    ['ev-start', 'ev-end', 'ev-repeat', 'ev-count'].forEach((id) => {
+      const el = $(id);
+      if (!el) return;
+      el.addEventListener('change', updateSchedulePreview);
+      el.addEventListener('input', updateSchedulePreview);
+    });
+    if ($('btn-cal-prev')) {
+      $('btn-cal-prev').addEventListener('click', () => {
+        calCursor.setMonth(calCursor.getMonth() - 1);
+        renderCalendar();
+      });
+    }
+    if ($('btn-cal-next')) {
+      $('btn-cal-next').addEventListener('click', () => {
+        calCursor.setMonth(calCursor.getMonth() + 1);
+        renderCalendar();
+      });
+    }
+    if ($('btn-goto-new-schedule')) {
+      $('btn-goto-new-schedule').addEventListener('click', () => {
+        if (livePromo) openPlanAheadEditor();
+        else {
+          planningAhead = false;
+          editingLive = false;
+          renderLive();
+          $('event-editor').classList.remove('hidden');
+          setTab('event');
+        }
+      });
+    }
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('checkout') === 'success' && params.get('session_id')) {
       await finishCheckoutPublish(params.get('session_id'));
-      history.replaceState({}, '', 'app.html');
-    } else if (params.get('checkout') === 'cancel') {
+      history.replaceState({}, '', appPathClean());
+    } else if (params.get('checkout') === 'schedule_success' && params.get('session_id')) {
+      await finishScheduleCheckout(params.get('session_id'));
+      history.replaceState({}, '', appPathClean());
+    } else if (params.get('checkout') === 'cancel' || params.get('checkout') === 'schedule_cancel') {
       showMsg($('event-msg'), 'Checkout canceled. Your draft is still saved.', false);
       setTab('event');
-      history.replaceState({}, '', 'app.html');
+      history.replaceState({}, '', appPathClean());
     }
   })();
 })();
